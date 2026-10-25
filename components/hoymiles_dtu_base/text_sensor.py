@@ -3,7 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import text_sensor
 from esphome.const import ENTITY_CATEGORY_DIAGNOSTIC
 
-from . import HoymilesDtuComponent, HoymilesDtuInverter
+from . import HoymilesDtuBase, HoymilesDtuInverter
 from .const import (
     CONF_DTU_ID,
     CONF_INVERTER_ID,
@@ -59,7 +59,7 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.Optional(CONF_INVERTER_ID): cv.use_id(HoymilesDtuInverter),
-            cv.Optional(CONF_DTU_ID): cv.use_id(HoymilesDtuComponent),
+            cv.Optional(CONF_DTU_ID): cv.use_id(HoymilesDtuBase),
             **{
                 cv.Optional(key): schema
                 for key, schema in INVERTER_TEXT_SENSOR_TYPES.items()

@@ -25,7 +25,7 @@ from esphome.const import (
     UNIT_WATT_HOURS,
 )
 
-from . import HoymilesDtuComponent, HoymilesDtuInverter
+from . import HoymilesDtuBase, HoymilesDtuInverter
 from .const import (
     CONF_AC_CURRENT,
     CONF_AC_FREQUENCY,
@@ -167,7 +167,7 @@ CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.Optional(CONF_INVERTER_ID): cv.use_id(HoymilesDtuInverter),
-            cv.Optional(CONF_DTU_ID): cv.use_id(HoymilesDtuComponent),
+            cv.Optional(CONF_DTU_ID): cv.use_id(HoymilesDtuBase),
             **{cv.Optional(key): schema for key, schema in SENSOR_TYPES.items()},
             cv.Optional(CONF_CHANNELS): cv.ensure_list(CHANNEL_SCHEMA),
             **{cv.Optional(key): schema for key, schema in DTU_SENSOR_TYPES.items()},

@@ -55,8 +55,16 @@ Any nRF24L01+ module wired to your ESP's SPI bus, plus two dedicated GPIOs:
 ```yaml
 external_components:
   - source: github://swifty99/dtu-esphome
-    components: [hoymiles_dtu_base]
+    components: [hoymiles_dtu_base, hoymiles_dtu_rf24]
 ```
+
+The code is split into two ESPHome components:
+
+- `hoymiles_dtu_base`: the radio-independent part. It covers the protocol codec,
+  polling, decoding, the `sensor`/`text_sensor` platforms and the
+  `radio_set_power_limit` action. It has no YAML block of its own; the radio
+  component loads it automatically.
+- `hoymiles_dtu_rf24`: the hub for HM inverters on an nRF24L01+.
 
 ## Minimal configuration
 
@@ -67,7 +75,7 @@ spi:
   mosi_pin: GPIO11
   miso_pin: GPIO16
 
-hoymiles_dtu_base:
+hoymiles_dtu_rf24:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO9
@@ -87,7 +95,7 @@ sensor:
 
 ## Configuration reference
 
-### `hoymiles_dtu_base:` (hub)
+### `hoymiles_dtu_rf24:` (hub)
 
 The hub owns the nRF24 radio and polls each configured inverter in turn; it
 is a standard ESPHome `PollingComponent`, so it accepts the usual
@@ -117,7 +125,7 @@ is a standard ESPHome `PollingComponent`, so it accepts the usual
 - Also accepts the standard SPI device options (`spi_id`, `cs_pin`,
   `data_rate`, `spi_mode`, ...).
 
-### `inverters:` (list, under `hoymiles_dtu_base:`)
+### `inverters:` (list, under `hoymiles_dtu_rf24:`)
 
 - **`id`** (**Required**, ID): used to attach `sensor:`/`text_sensor:`
   entities to this inverter.
@@ -195,7 +203,7 @@ request state machine telemetry polling uses, so calling it never stalls the
 ESPHome loop, and it's automatically deferred if a telemetry exchange is
 already in flight.
 
-- `id` (**Required**): the `hoymiles_dtu_base:` hub to target.
+- `id` (**Required**): the `hoymiles_dtu_rf24:` hub to target.
 - `percent` (*Optional*, 0-100, default `100`, templatable): relative power
   limit.
 - `persistent` (*Optional*, boolean, default `true`, templatable): `true`
@@ -217,7 +225,7 @@ Only the first configured inverter can currently be targeted by this action
 (single-inverter limitation, matching how the DevControl exchange is wired
 today).
 
-**`hoymiles_dtu_base.scan_inverters`** — starts an active over-the-air discovery scan.
+**`hoymiles_dtu_rf24.scan_inverters`** — starts an active over-the-air discovery scan.
 It **transmits** the discovery requests the CCC report describes (see
 [Security: scanning for inverters](#security-scanning-for-inverters)), so it is
 only ever an on-demand action — there is no config option that would run it on a
@@ -225,7 +233,7 @@ timer. Non-blocking: it runs on the same radio state machine as telemetry, a
 probe at a time, and returns the radio to normal polling when the scan window
 ends.
 
-- `id` (**Required**): the `hoymiles_dtu_base:` hub to target.
+- `id` (**Required**): the `hoymiles_dtu_rf24:` hub to target.
 - `duration` (*Optional*, time period, default `20s`): how long to keep probing.
 - `commands` (*Optional*, list of `search_id` / `collect_info`, default both):
   which discovery command(s) to send.
@@ -235,7 +243,7 @@ button:
   - platform: template
     name: "Scan for inverters"
     on_press:
-      - hoymiles_dtu_base.scan_inverters:
+      - hoymiles_dtu_rf24.scan_inverters:
           id: dtu
           duration: 20s
           commands: [search_id, collect_info]
@@ -334,7 +342,7 @@ request and cannot control the inverter. Honest limitations:
 ## Security: scanning for inverters
 
 The active counterpart to detection. Where `scan_detection` listens, the
-**`hoymiles_dtu_base.scan_inverters`** action *transmits* the discovery requests
+**`hoymiles_dtu_rf24.scan_inverters`** action *transmits* the discovery requests
 themselves and reports the serials that answer — the same thing AhoyDTU,
 OpenDTU, and the CCC report's proof-of-concept scanner do. Two legitimate uses,
 both on hardware you own or are authorised to assess:
@@ -387,13 +395,13 @@ the label), `PID` is the model/product ID (`search_id` only; `-` for
 A scan is started by exactly one of three one-shot triggers — never a recurring
 timer:
 
-- the **`hoymiles_dtu_base.scan_inverters`** action (from any ESPHome automation);
+- the **`hoymiles_dtu_rf24.scan_inverters`** action (from any ESPHome automation);
 - a **template button** that calls it (press it when you physically add hardware);
 - the hub's **`scan_on_boot`** option, which runs a single scan a short delay
   after boot — handy for one-time onboarding of a new node:
 
 ```yaml
-hoymiles_dtu_base:
+hoymiles_dtu_rf24:
   id: dtu
   # ...
   scan_on_boot: true            # one scan ~45s after boot, then never again
@@ -417,8 +425,10 @@ another node's own `scan_detection`.
 
 This section is for anyone extending the component or debugging a link that
 won't acquire. All of it is implemented in `components/hoymiles_dtu_base/protocol.{h,cpp}`
-(pure protocol/codec, unit-tested, no ESPHome or radio-hardware dependency)
-and `hoymiles_dtu.cpp` (the radio driver + async state machine).
+(pure protocol/codec, unit-tested, no ESPHome or radio-hardware dependency),
+`components/hoymiles_dtu_base/dtu_base.{h,cpp}` (poll scheduling, fragment
+collection, publishing) and `components/hoymiles_dtu_rf24/dtu_rf24.{h,cpp}`
+(the radio driver + async state machine).
 
 ### The physical link
 

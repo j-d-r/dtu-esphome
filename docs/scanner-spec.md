@@ -120,7 +120,7 @@ alongside `TELEMETRY` and `DEV_CONTROL`.
 - **Channel sweep.** Round-robin the five HM channels `{3, 23, 40, 61, 75}`. On
   each channel transmit the enabled command(s) — `0x02`, then `0x06` — and dwell
   for replies before hopping. Repeat sweeps until the scan duration elapses.
-  Channel dwell is a tunable at the top of `hoymiles_dtu.cpp`, like
+  Channel dwell is a tunable at the top of `dtu_rf24.cpp`, like
   `MONITOR_CHANNEL_DWELL_MS`.
 - **Dedup + collect.** Key discovered inverters by `serial_suffix`; keep the
   first PID and the command/channel that found each. Publish new discoveries as
@@ -144,7 +144,7 @@ button:
   - platform: template
     name: "Scan for inverters"
     on_press:
-      - hoymiles_dtu_base.scan_inverters:
+      - hoymiles_dtu_rf24.scan_inverters:
           id: dtu
           duration: 20s          # optional, bounded; default 20s
           commands: [search_id, collect_info]   # optional; default both
@@ -162,8 +162,8 @@ sensor:
 ```
 
 New symbols to add: `CONF_SCAN_RESULT`, `CONF_SCAN_FOUND_COUNT`, an
-`hoymiles_dtu_base.scan_inverters` action (with `CONF_DURATION`, and a `commands`
-enum list), and the matching setters/sensors on `HoymilesDtuComponent`.
+`hoymiles_dtu_rf24.scan_inverters` action (with `CONF_DURATION`, and a `commands`
+enum list), and the matching setters/sensors on `HoymilesDtuRf24`.
 
 ### Output format
 

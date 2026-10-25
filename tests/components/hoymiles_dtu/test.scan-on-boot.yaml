@@ -28,9 +28,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu_base]
+    components: [hoymiles_dtu_base, hoymiles_dtu_rf24]
 
-hoymiles_dtu_base:
+hoymiles_dtu_rf24:
   id: dtu
   spi_id: dtu_spi
   cs_pin: ${cs_pin}

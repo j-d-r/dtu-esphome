@@ -6,7 +6,7 @@ on hardware, using a real AhoyDTU as the intruder.
 ## What was built (and merged in this branch)
 
 A **receive-only** scan/intrusion detector. `scan_detection: true` on the
-`hoymiles_dtu_base:` hub makes the radio, while idle between telemetry polls, listen
+nRF24 hub (`hoymiles_dtu_rf24:`) makes the radio, while idle between telemetry polls, listen
 on the HM global Search-ID address (`05 64 64 64 64`) and on the inverter's own
 address, hopping the HM channels. Overheard foreign DTU **requests** are
 classified and published to a hub-level `scan_detected` text sensor.
@@ -17,10 +17,15 @@ gives visibility. Full background: the CCC report in `docs/hoymiles_dtu_vuln.pdf
 
 Key code:
 - `components/hoymiles_dtu_base/protocol.cpp` → `hm_classify_sniffed_packet()`
-- `components/hoymiles_dtu_base/hoymiles_dtu.cpp` → `enter_monitor_` / `poll_monitor_`
-  / `read_monitor_packets_` / `report_scan_`
-- Tunables (top of `hoymiles_dtu.cpp`): `MONITOR_CHANNEL_DWELL_MS` (20 ms),
-  `SCAN_REPORT_THROTTLE_MS` (2000 ms).
+- `components/hoymiles_dtu_rf24/dtu_rf24.cpp` → `enter_monitor_` / `poll_monitor_`
+  / `read_monitor_packets_`
+- Tunable (top of `dtu_rf24.cpp`): `MONITOR_CHANNEL_DWELL_MS` (20 ms).
+
+> Note, 2026-10-25: when the nRF24 hub moved to its own component,
+> `report_scan_()` and `SCAN_REPORT_THROTTLE_MS` (2000 ms) moved into the
+> radio-independent `hoymiles_dtu_base/dtu_base.{h,cpp}`. The nRF24 monitor
+> itself is unchanged and lives in `dtu_rf24.cpp`; `report_scan_()` now takes
+> the channel it was heard on as an argument.
 
 Verified so far: native classifier tests (incl. the report's real `0x02`/`0x06`
 captures), `esphome config` on all test YAMLs, and a full ESP32 firmware compile
