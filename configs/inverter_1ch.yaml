@@ -1,5 +1,7 @@
-# HM or HMS inverter with 1 DC input (HM-300/350/400, HMS-300/350/400/450/500, HMS-450/500 v2).
-# vars: family (hm or hms, selects {family}_inverter_base.yaml), plus the vars of that base file.
+# HM, HERF or HMS inverter with 1 DC input (HM-300/350/400, HERF-300, HMS-300/350/400/450/500,
+# HMS-450/500 v2).
+# vars: family (hm for HM and HERF, hms for HMS; selects {family}_inverter_base.yaml), plus the
+# vars of that base file.
 
 packages:
   inverter_base: !include

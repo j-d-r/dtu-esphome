@@ -34,7 +34,9 @@ RadioSetPowerLimitAction = hoymiles_dtu_ns.class_(
 )
 
 # HM families (nRF24), keyed by DC-input count: 1-channel HM-300/350/400, 2-channel
-# HM-600/700/800, 4-channel HM-1000/1200/1500 - the same grouping Ahoy uses.
+# HM-600/700/800, 4-channel HM-1000/1200/1500 - the same grouping Ahoy uses. The HERF
+# models talk nRF24 too (OpenDTU HERF_*); HERF-300 and HERF-600/800 use their own record
+# layouts, not the HM ones.
 HM_MODEL_OPTIONS = {
     "hm_300": HmModel.HM_300,
     "hm_350": HmModel.HM_350,
@@ -45,6 +47,11 @@ HM_MODEL_OPTIONS = {
     "hm_1000": HmModel.HM_1000,
     "hm_1200": HmModel.HM_1200,
     "hm_1500": HmModel.HM_1500,
+    "herf_300": HmModel.HERF_300,
+    "herf_600": HmModel.HERF_600,
+    "herf_800": HmModel.HERF_800,
+    "herf_1600": HmModel.HERF_1600,
+    "herf_1800": HmModel.HERF_1800,
 }
 
 # HMS families (CMT2300A). Each entry maps to its record layout; MODEL_SERIAL_PREFIXES
@@ -98,6 +105,11 @@ MODEL_SERIAL_PREFIXES = {
     "hms_1600": (0x1164, 0x1166, 0x1420, 0x1421),
     "hms_1800": (0x1164, 0x1166, 0x1420, 0x1421),
     "hms_2000": (0x1164, 0x1166, 0x1420, 0x1421),
+    "herf_300": (0x2841,),
+    "herf_600": (0x2821,),
+    "herf_800": (0x2821,),
+    "herf_1600": (0x2801,),
+    "herf_1800": (0x2801,),
 }
 
 

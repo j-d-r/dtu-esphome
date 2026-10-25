@@ -1,4 +1,4 @@
-# One HM inverter: its entry on the nRF24 hub plus the entities every model has.
+# One HM or HERF inverter: its entry on the nRF24 hub plus the entities every model has.
 # Use inverter_1ch.yaml / inverter_2ch.yaml / inverter_4ch.yaml with family: hm, which include
 # this and add the DC channels.
 #
@@ -7,7 +7,7 @@
 #   inverter: id of this inverter
 #   name:     entity name prefix, e.g. HM1200
 #   serial:   printed serial number (12 digits)
-#   model:    hm_* model, e.g. hm_1200
+#   model:    hm_* or herf_* model, e.g. hm_1200
 
 hoymiles_dtu_rf24:
   id: !extend ${dtu_id}

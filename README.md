@@ -24,20 +24,29 @@ beyond "one at a time" are not implemented yet.
 ### Supported models
 
 `model:` also selects which radio the inverter needs, so it decides which hub
-component it goes under: HM models talk to an nRF24 (`hoymiles_dtu_rf24:`), HMS
-models to a CMT2300A (`hoymiles_dtu_cmt:`).
+component it goes under: HM and HERF models talk to an nRF24
+(`hoymiles_dtu_rf24:`), HMS models to a CMT2300A (`hoymiles_dtu_cmt:`).
 
-**HM (nRF24, `hoymiles_dtu_rf24:`)** — the families Ahoy handles, grouped by DC-input
-(channel) count, which is what the realtime payload layout depends on:
+**HM and HERF (nRF24, `hoymiles_dtu_rf24:`)** — the HM families Ahoy handles,
+grouped by DC-input (channel) count, which is what the realtime payload layout
+depends on, plus the HERF models OpenDTU supports:
 
 | Channels | Serial prefix | Models (`model:` value) |
 | --- | --- | --- |
 | 1 | 1121, 1122, 1022 | HM-300 (`hm_300`), HM-350 (`hm_350`), HM-400 (`hm_400`) |
 | 2 | 1141, 1142, 1042 | HM-600 (`hm_600`), HM-700 (`hm_700`), HM-800 (`hm_800`) |
 | 4 | 1161, 1162, 1062 | HM-1000 (`hm_1000`), HM-1200 (`hm_1200`), HM-1500 (`hm_1500`) |
+| 1 | 2841 | HERF-300 (`herf_300`) |
+| 2 | 2821 | HERF-600 (`herf_600`), HERF-800 (`herf_800`) |
+| 4 | 2801 | HERF-1600 (`herf_1600`), HERF-1800 (`herf_1800`) |
 
 The 10xx HM prefixes are MI 3rd-generation inverters, which both Ahoy and
-OpenDTU treat as HM.
+OpenDTU treat as HM. HERF support follows OpenDTU only (Ahoy has none) and is
+not hardware-verified: HERF-600/800 records are laid out like the HMS 2-channel
+ones and HERF-1600/1800 like the HM 4-channel ones, while HERF-300 has its own
+layout. OpenDTU marks HERF-300's reactive power, temperature and event code "to
+be verified" and reads reactive power and the event code from the same field,
+so treat those three values as unconfirmed on that model.
 
 **HMS (CMT2300A, `hoymiles_dtu_cmt:`)** — the HMS record layouts differ from the
 HM ones even at the same channel count, so each family is its own decoder. The
