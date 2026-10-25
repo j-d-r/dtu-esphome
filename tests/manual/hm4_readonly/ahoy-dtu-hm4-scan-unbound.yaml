@@ -18,7 +18,7 @@ esphome:
     then:
       - delay: 18min
       - logger.log: "HIL: starting UNBOUND inverter scan (0x02 window)"
-      - hoymiles_dtu_base.scan_inverters:
+      - hoymiles_dtu_rf24.scan_inverters:
           id: dtu
           duration: 40s
           commands: [search_id, collect_info]
@@ -46,9 +46,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu_base]
+    components: [hoymiles_dtu_base, hoymiles_dtu_rf24]
 
-hoymiles_dtu_base:
+hoymiles_dtu_rf24:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO9

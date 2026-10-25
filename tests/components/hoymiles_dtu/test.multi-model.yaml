@@ -22,11 +22,11 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu_base]
+    components: [hoymiles_dtu_base, hoymiles_dtu_rf24]
 
 # Exercises all three HM channel families (1ch/2ch/4ch) so the schema and per-model decode paths
 # stay compiled and validated together.
-hoymiles_dtu_base:
+hoymiles_dtu_rf24:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO5

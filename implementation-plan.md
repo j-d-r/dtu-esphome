@@ -11,7 +11,7 @@ config schemas rather than porting upstream application structure.
 
 Implemented as of 2026-07-01:
 
-- `hoymiles_dtu_base` hub with ESPHome SPI, `cs_pin`, `ce_pin`, optional `irq_pin`,
+- `hoymiles_dtu_rf24` hub with ESPHome SPI, `cs_pin`, `ce_pin`, optional `irq_pin`,
   `update_interval`, `pa_level`, and one or more inverter definitions.
 - nRF24 probe/init using 1 MHz SPI mode 0, 250 kbps RF, CRC16, dynamic payloads,
   5-byte addresses, and the HM channel set.
@@ -30,6 +30,19 @@ Implemented as of 2026-07-01:
 - Compile fixtures for ESP32/ESP32-S3 on Arduino/ESP-IDF, plus a multi-model
   fixture.
 - Manual HIL config/checklist in `tests/manual/hm4_readonly/`.
+
+Changed 2026-10-25:
+
+- The nRF24 hub moved into its own ESPHome component, `hoymiles_dtu_rf24`
+  (`HoymilesDtuRf24` in `dtu_rf24.{h,cpp}`). Everything radio-independent stays
+  in `hoymiles_dtu_base`: the protocol, `HoymilesDtuBase` in
+  `dtu_base.{h,cpp}` (polling, request building, fragment collection, decoding,
+  publishing, the power-limit queue), the sensor/text_sensor platforms, and
+  `radio_set_power_limit`. ESPHome only compiles sources that sit directly in a
+  component's folder, so the components are siblings, not subfolders.
+- YAML: the hub block is now `hoymiles_dtu_rf24:`, and the scan action is
+  `hoymiles_dtu_rf24.scan_inverters`. Entity platforms stay
+  `platform: hoymiles_dtu_base`. This is a breaking YAML change.
 
 ## Scope
 
