@@ -1,4 +1,4 @@
-// Native unit test for the production protocol decoder (components/hoymiles_dtu/protocol.cpp).
+// Native unit test for the production protocol decoder (components/hoymiles_dtu_base/protocol.cpp).
 //
 // This compiles and links the real component code off-device so the request framing, CRCs, frame
 // parsing/assembly, and the 1-/2-/4-channel realtime decoders are tested directly (no Python

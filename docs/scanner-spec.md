@@ -144,25 +144,25 @@ button:
   - platform: template
     name: "Scan for inverters"
     on_press:
-      - hoymiles_dtu.scan_inverters:
+      - hoymiles_dtu_base.scan_inverters:
           id: dtu
           duration: 20s          # optional, bounded; default 20s
           commands: [search_id, collect_info]   # optional; default both
 
 # Reporting — hub-level sensors, keyed by dtu_id like the other radio diagnostics.
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_result: {name: "DTU Scan Result"}     # each newly discovered inverter, one line
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_found_count: {name: "DTU Scan Found"}  # unique inverters found this scan
 ```
 
 New symbols to add: `CONF_SCAN_RESULT`, `CONF_SCAN_FOUND_COUNT`, an
-`hoymiles_dtu.scan_inverters` action (with `CONF_DURATION`, and a `commands`
+`hoymiles_dtu_base.scan_inverters` action (with `CONF_DURATION`, and a `commands`
 enum list), and the matching setters/sensors on `HoymilesDtuComponent`.
 
 ### Output format

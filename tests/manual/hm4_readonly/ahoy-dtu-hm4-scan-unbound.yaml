@@ -18,7 +18,7 @@ esphome:
     then:
       - delay: 18min
       - logger.log: "HIL: starting UNBOUND inverter scan (0x02 window)"
-      - hoymiles_dtu.scan_inverters:
+      - hoymiles_dtu_base.scan_inverters:
           id: dtu
           duration: 40s
           commands: [search_id, collect_info]
@@ -46,9 +46,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO9
@@ -65,12 +65,12 @@ hoymiles_dtu:
       model: hm_1200
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_found_count: {name: "HM4 Scan Found"}
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_result: {name: "HM4 Scan Result"}
     last_rx_payload: {name: "DTU Last RX Payload"}

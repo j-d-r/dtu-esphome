@@ -28,9 +28,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: ${cs_pin}
@@ -46,13 +46,13 @@ hoymiles_dtu:
       model: hm_1500
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_severity:
       name: "DTU Scan Severity"
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_detected:
       name: "DTU Scan Detected"

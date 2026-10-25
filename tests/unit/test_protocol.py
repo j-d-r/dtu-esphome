@@ -3,7 +3,8 @@ from pathlib import Path
 
 
 def load_protocol_module():
-    path = Path(__file__).parents[2] / "components" / "hoymiles_dtu" / "protocol.py"
+    component = Path(__file__).parents[2] / "components" / "hoymiles_dtu_base"
+    path = component / "protocol.py"
     spec = importlib.util.spec_from_file_location("hoymiles_protocol", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None

@@ -1,6 +1,6 @@
 """Compile and run the native C++ protocol test against the real component sources.
 
-This keeps the on-device decoder (components/hoymiles_dtu/protocol.cpp) under test
+This keeps the on-device decoder (components/hoymiles_dtu_base/protocol.cpp) under test
 without a parallel Python re-implementation. Skipped when no C++ compiler exists.
 """
 
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).parents[2]
-COMPONENT = REPO / "components" / "hoymiles_dtu"
+COMPONENT = REPO / "components" / "hoymiles_dtu_base"
 NATIVE = REPO / "tests" / "native"
 
 
