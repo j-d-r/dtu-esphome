@@ -4,7 +4,7 @@ from esphome import automation, pins
 from esphome.components import spi
 from esphome.components.hoymiles_dtu_base import (
     BASE_SCHEMA,
-    HM_MODEL_OPTIONS,
+    NRF24,
     HoymilesDtuBase,
     hoymiles_dtu_ns,
     register_hub,
@@ -93,7 +93,7 @@ _HUB_SCHEMA = BASE_SCHEMA.extend(
 
 CONFIG_SCHEMA = cv.All(
     _HUB_SCHEMA,
-    validate_inverter_models(HM_MODEL_OPTIONS, "CMT2300A", "hoymiles_dtu_cmt"),
+    validate_inverter_models(NRF24),
 )
 
 FINAL_VALIDATE_SCHEMA = spi.final_validate_device_schema(

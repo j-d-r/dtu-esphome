@@ -5,7 +5,7 @@ from esphome import pins
 from esphome.components import spi
 from esphome.components.hoymiles_dtu_base import (
     BASE_SCHEMA,
-    HMS_MODEL_OPTIONS,
+    CMT,
     HoymilesDtuBase,
     hoymiles_dtu_ns,
     register_hub,
@@ -112,7 +112,7 @@ def _validate_frequency(config):
 CONFIG_SCHEMA = cv.All(
     _HUB_SCHEMA,
     _validate_frequency,
-    validate_inverter_models(HMS_MODEL_OPTIONS, "nRF24", "hoymiles_dtu_rf24"),
+    validate_inverter_models(CMT),
 )
 
 
