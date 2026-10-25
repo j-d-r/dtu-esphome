@@ -86,6 +86,19 @@ def spi_buses(*interfaces):
 
 CASES = [
     pytest.param(
+        # Unquoted, YAML reads an all-digit serial as a decimal number.
+        NRF24_HUB.format(serial="116182806989", model="hm_1200").replace(
+            '"116182806989"', "116182806989"
+        ),
+        "serial must be a quoted string",
+        id="serial-not-quoted",
+    ),
+    pytest.param(
+        NRF24_HUB.format(serial="1161828069890", model="hm_1200"),
+        "12 hexadecimal digits",
+        id="serial-too-long",
+    ),
+    pytest.param(
         NRF24_HUB.format(serial="114400000000", model="hms_800"),
         "CMT2300A",
         id="hms-model-on-nrf24",

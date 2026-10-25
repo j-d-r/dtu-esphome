@@ -56,7 +56,7 @@ hoymiles_dtu_cmt:
   update_interval: 15s
   inverters:
     - id: hms
-      # Printed inverter serial (packed BCD under the hood). 1144... = HMS-600/700/800/900/1000.
+      # Printed inverter serial (hexadecimal digits, quoted). 1144... = HMS-600/700/800/900/1000.
       serial: "114400000000"
       model: hms_800
 

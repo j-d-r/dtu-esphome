@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import string
 
-def parse_serial_bcd(value: str | int) -> int:
-    text = str(value).strip()
-    if not all(_ in "0123456789abcdefABCDEF" for _ in text):
-        raise ValueError("BCD serial must contain decimal digits only")
-    if len(text) != 12:
-        raise ValueError("BCD serial must be exactly 12 decimal digits")
+
+def parse_serial(text: str) -> int:
+    """Printed inverter serial (12 hex digits, e.g. "116182806989") -> its value.
+
+    The printed digits are hexadecimal: they are the serial's bytes as they go on air,
+    and some models print letters (e.g. HMS prefix 114A). Parsing them as a decimal
+    number would compute the wrong radio address.
+    """
+    if not isinstance(text, str):
+        raise ValueError("serial must be a string")
+    text = text.strip()
+    if len(text) != 12 or not all(c in string.hexdigits for c in text):
+        raise ValueError("serial must be exactly 12 hexadecimal digits")
     return int(text, 16)
 
 

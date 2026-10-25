@@ -273,14 +273,17 @@ There is no `pa_level`, `ce_pin`, `irq_pin` or `spi_id` on this radio, and no
 
 - **`id`** (**Required**, ID): used to attach `sensor:`/`text_sensor:`
   entities to this inverter.
-- **`serial`** (**Required**, string): the inverter's printed serial number,
-  as **12 decimal digits**. It is interpreted as **packed BCD**, exactly like
-  Ahoy — the printed digits map straight onto the radio address bytes. This
-  is *not* the same as parsing the serial as a plain decimal number; doing
-  that would compute the wrong radio address and the inverter would never
-  respond. Just copy the digits off the inverter's label. (HMS serials work
-  exactly the same way — the CMT2300A carries the address inside the packet
-  instead of in a hardware address register, but the derivation is identical.)
+- **`serial`** (**Required**, quoted string): the inverter's printed serial
+  number, **12 hexadecimal digits** — usually all decimal-looking digits, but
+  some models print letters (e.g. HMS prefix `114A`). Quote it
+  (`serial: "116182806989"`): unquoted, YAML would read an all-digit serial as
+  a decimal number, and the config is rejected. The digits are read as **hex**,
+  exactly like Ahoy — they map straight onto the radio address bytes. Parsing
+  the serial as a plain decimal number would compute the wrong radio address
+  and the inverter would never respond. Just copy the digits off the
+  inverter's label. (HMS serials work exactly the same way — the CMT2300A
+  carries the address inside the packet instead of in a hardware address
+  register, but the derivation is identical.)
 - **`model`** (**Required**, one of the `model:` values in the tables above).
   It must belong to the hub's radio family (HM for `hoymiles_dtu_rf24`, HMS
   for `hoymiles_dtu_cmt`). The build warns if
@@ -518,7 +521,7 @@ OpenDTU, and the CCC report's proof-of-concept scanner do. Two legitimate uses,
 both on hardware you own or are authorised to assess:
 
 - **Onboarding** — discover the serial and model of your own inverter over the
-  air instead of reading the packed-BCD label by eye.
+  air instead of reading the label by eye.
 - **Exposure auditing** — enumerate the Hoymiles inverters within radio range of
   your site to see what an attacker with a cheap module would see.
 
@@ -556,7 +559,7 @@ text_sensor:
 
 Each `scan_result` line reads like
 `serial ...82806989 | PID 0x1144 | via search-id | ch 40 | #1`: the `serial` is
-the discovered **last 8 printed digits** (packed BCD — enough to address the
+the discovered **last 8 printed digits** (hexadecimal — enough to address the
 inverter; the printed 4-digit model prefix is not transmitted, complete it from
 the label), `PID` is the model/product ID (`search_id` only; `-` for
 `collect_info`), and `#` is a running count. A scan that finds nothing publishes
@@ -619,12 +622,13 @@ be listening at any given moment, not just how to encode a byte.
 Both the DTU and every inverter have a 5-byte nRF radio address derived from
 a serial number: byte 0 is always `0x01`, and bytes 1-4 are the serial's low
 32 bits, byte-reversed (`hm_radio_id_from_serial` in `protocol.cpp`). The
-important, easy-to-get-wrong part: the *printed* inverter serial is **packed
-BCD**, not a decimal integer — e.g. printed serial `116182806989` produces
-radio address `01 82 80 69 89`, but naively parsing it as decimal-116182806989
-computes a completely different (wrong) address that the inverter will never
-answer to. This bit the project early on; `validate_serial` in `__init__.py`
-and `parse_serial_bcd` in `protocol.py` exist specifically to keep it correct.
+important, easy-to-get-wrong part: the *printed* inverter serial is
+**hexadecimal**, not a decimal integer — e.g. printed serial `116182806989`
+produces radio address `01 82 80 69 89`, but naively parsing it as
+decimal-116182806989 computes a completely different (wrong) address that the
+inverter will never answer to. This bit the project early on; `validate_serial`
+in `__init__.py` and `parse_serial` in `protocol.py` exist specifically to keep
+it correct.
 
 ### The telemetry exchange
 

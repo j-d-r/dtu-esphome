@@ -78,7 +78,7 @@ static void test_crc_vectors() {
 }
 
 static void test_radio_id_and_address() {
-  // Packed-BCD serial 0x116182806989 -> address 01 82 80 69 89 (proven against the live HM-1200).
+  // Printed (hex) serial 0x116182806989 -> address 01 82 80 69 89 (proven against the live HM-1200).
   const uint64_t radio_id = hm_radio_id_from_serial(0x116182806989ULL);
   CHECK(radio_id == 0x8969808201ULL);
   uint8_t addr[5];
@@ -723,7 +723,7 @@ static void test_scan_requests() {
 // Active scanner: parse discovery replies, using the report's real HMS-600 captures.
 static void test_scan_responses() {
   HmDiscoveredInverter d;
-  // Report fig. 3 RX_raw: serial suffix 84 56 00 17 (BCD), echoed DTU 80 18 72 64, PID 0x1144.
+  // Report fig. 3 RX_raw: serial suffix 84 56 00 17 (hex), echoed DTU 80 18 72 64, PID 0x1144.
   const uint8_t sid_resp[] = {0x82, 0x84, 0x56, 0x00, 0x17, 0x80, 0x18, 0x72,
                               0x64, 0x11, 0x44, 0x84, 0x56, 0x00, 0x17, 0x59};
   CHECK(hm_parse_search_id_response(sid_resp, sizeof(sid_resp), &d));
