@@ -736,6 +736,21 @@ esphome compile tests/components/hoymiles_dtu/test.minimal.yaml
 esphome compile tests/components/hoymiles_dtu/test.hms-cmt.yaml
 ```
 
+Format the C++ sources, and lint them with clang-tidy using ESPHome's
+`.clang-tidy`:
+
+```sh
+clang-format -i components/*/*.{h,cpp}
+scripts/clang-tidy.py          # add --fix to apply fix-its, --no-compile to reuse builds
+```
+
+`scripts/clang-tidy.py` compiles the ESP-IDF fixtures (`test.esp32-idf.yaml`
+and `test.hms-cmt-idf.yaml`) to get real compiler flags, then runs clang-tidy
+on the repo sources. It needs `esphome` and clang-tidy 22 (the version ESPHome
+pins) on the `PATH`. It uses `clang-tidy-22` if present, otherwise
+`clang-tidy` with a warning when that is another version. `--clang-tidy PATH`
+overrides it.
+
 Hardware-in-the-loop checklists live in `tests/manual/`:
 `hm4_readonly/` for HM telemetry and `hms_cmt/` for the unverified HMS path.
 
