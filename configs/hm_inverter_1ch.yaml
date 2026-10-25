@@ -1,0 +1,21 @@
+# HM inverter with 1 DC input (HM-300/350/400). vars: see hm_inverter_base.yaml.
+
+packages:
+  hm_inverter_base: !include
+    file: hm_inverter_base.yaml
+    vars:
+      dtu_id: ${dtu_id}
+      inverter: ${inverter}
+      name: ${name}
+      serial: ${serial}
+      model: ${model}
+
+sensor:
+  - platform: hoymiles_dtu_base
+    inverter_id: ${inverter}
+    channels:
+      - number: 1
+        dc_voltage: { name: "${name} CH1 DC Voltage" }
+        dc_current: { name: "${name} CH1 DC Current" }
+        dc_power: { name: "${name} CH1 DC Power" }
+        yield_today: { name: "${name} CH1 Yield Today" }

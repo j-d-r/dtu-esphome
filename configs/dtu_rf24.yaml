@@ -1,0 +1,21 @@
+# Hub-level entities of a hoymiles_dtu_rf24 hub. Include once per hub, not per inverter.
+# The scan entities stay empty unless scan_detection (passive) or the scan_inverters action /
+# scan_on_boot (active) is used.
+#
+# vars:
+#   dtu_id: id of the hoymiles_dtu_rf24 hub
+#   name:   entity name prefix, e.g. DTU
+
+sensor:
+  - platform: hoymiles_dtu_base
+    dtu_id: ${dtu_id}
+    scan_severity: { name: "${name} Scan Severity" }
+    scan_found_count: { name: "${name} Scan Found" }
+
+text_sensor:
+  - platform: hoymiles_dtu_base
+    dtu_id: ${dtu_id}
+    last_rx_payload: { name: "${name} Last RX Payload" }
+    last_radio_error: { name: "${name} Last Radio Error" }
+    scan_detected: { name: "${name} Scan Detected" }
+    scan_result: { name: "${name} Scan Result" }

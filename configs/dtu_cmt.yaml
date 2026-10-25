@@ -1,0 +1,11 @@
+# Hub-level entities of a hoymiles_dtu_cmt hub. Include once per hub, not per inverter.
+#
+# vars:
+#   dtu_id: id of the hoymiles_dtu_cmt hub
+#   name:   entity name prefix, e.g. DTU
+
+text_sensor:
+  - platform: hoymiles_dtu_base
+    dtu_id: ${dtu_id}
+    last_rx_payload: { name: "${name} Last RX Payload" }
+    last_radio_error: { name: "${name} Last Radio Error" }
