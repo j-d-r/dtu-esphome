@@ -22,11 +22,11 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 
 # Exercises all three HM channel families (1ch/2ch/4ch) so the schema and per-model decode paths
 # stay compiled and validated together.
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO5
@@ -45,14 +45,14 @@ hoymiles_dtu:
       model: hm_1500
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm1
     ac_power: {name: "HM1 AC Power"}
     yield_total: {name: "HM1 Yield Total"}
     channels:
       - number: 1
         dc_power: {name: "HM1 CH1 DC Power"}
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm2
     ac_power: {name: "HM2 AC Power"}
     channels:
@@ -60,7 +60,7 @@ sensor:
         dc_power: {name: "HM2 CH1 DC Power"}
       - number: 2
         dc_power: {name: "HM2 CH2 DC Power"}
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     ac_power: {name: "HM4 AC Power"}
     reactive_power: {name: "HM4 Reactive Power"}
@@ -70,7 +70,7 @@ sensor:
         dc_power: {name: "HM4 CH4 DC Power"}
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     status: {name: "HM4 Status"}
     last_seen: {name: "HM4 Last Seen"}

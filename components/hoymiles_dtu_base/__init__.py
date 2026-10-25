@@ -134,7 +134,7 @@ CONFIG_SCHEMA = cv.All(
 )
 
 FINAL_VALIDATE_SCHEMA = spi.final_validate_device_schema(
-    "hoymiles_dtu", require_miso=True, require_mosi=True
+    "hoymiles_dtu_base", require_miso=True, require_mosi=True
 )
 
 
@@ -182,7 +182,7 @@ RADIO_SET_POWER_LIMIT_ACTION_SCHEMA = cv.Schema(
 
 
 @automation.register_action(
-    "hoymiles_dtu.radio_set_power_limit",
+    "hoymiles_dtu_base.radio_set_power_limit",
     RadioSetPowerLimitAction,
     RADIO_SET_POWER_LIMIT_ACTION_SCHEMA,
     synchronous=True,
@@ -212,7 +212,7 @@ SCAN_INVERTERS_ACTION_SCHEMA = cv.Schema(
 
 
 @automation.register_action(
-    "hoymiles_dtu.scan_inverters",
+    "hoymiles_dtu_base.scan_inverters",
     ScanInvertersAction,
     SCAN_INVERTERS_ACTION_SCHEMA,
 )

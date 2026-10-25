@@ -6,7 +6,7 @@ on hardware, using a real AhoyDTU as the intruder.
 ## What was built (and merged in this branch)
 
 A **receive-only** scan/intrusion detector. `scan_detection: true` on the
-`hoymiles_dtu:` hub makes the radio, while idle between telemetry polls, listen
+`hoymiles_dtu_base:` hub makes the radio, while idle between telemetry polls, listen
 on the HM global Search-ID address (`05 64 64 64 64`) and on the inverter's own
 address, hopping the HM channels. Overheard foreign DTU **requests** are
 classified and published to a hub-level `scan_detected` text sensor.
@@ -16,8 +16,8 @@ command the inverter. The flaw itself is in the inverter firmware; this only
 gives visibility. Full background: the CCC report in `docs/hoymiles_dtu_vuln.pdf`.
 
 Key code:
-- `components/hoymiles_dtu/protocol.cpp` → `hm_classify_sniffed_packet()`
-- `components/hoymiles_dtu/hoymiles_dtu.cpp` → `enter_monitor_` / `poll_monitor_`
+- `components/hoymiles_dtu_base/protocol.cpp` → `hm_classify_sniffed_packet()`
+- `components/hoymiles_dtu_base/hoymiles_dtu.cpp` → `enter_monitor_` / `poll_monitor_`
   / `read_monitor_packets_` / `report_scan_`
 - Tunables (top of `hoymiles_dtu.cpp`): `MONITOR_CHANNEL_DWELL_MS` (20 ms),
   `SCAN_REPORT_THROTTLE_MS` (2000 ms).

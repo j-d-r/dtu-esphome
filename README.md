@@ -55,7 +55,7 @@ Any nRF24L01+ module wired to your ESP's SPI bus, plus two dedicated GPIOs:
 ```yaml
 external_components:
   - source: github://swifty99/dtu-esphome
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 ```
 
 ## Minimal configuration
@@ -67,7 +67,7 @@ spi:
   mosi_pin: GPIO11
   miso_pin: GPIO16
 
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO9
@@ -79,7 +79,7 @@ hoymiles_dtu:
       model: hm_1500
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     ac_power:
       name: "HM4 AC Power"
@@ -87,7 +87,7 @@ sensor:
 
 ## Configuration reference
 
-### `hoymiles_dtu:` (hub)
+### `hoymiles_dtu_base:` (hub)
 
 The hub owns the nRF24 radio and polls each configured inverter in turn; it
 is a standard ESPHome `PollingComponent`, so it accepts the usual
@@ -117,7 +117,7 @@ is a standard ESPHome `PollingComponent`, so it accepts the usual
 - Also accepts the standard SPI device options (`spi_id`, `cs_pin`,
   `data_rate`, `spi_mode`, ...).
 
-### `inverters:` (list, under `hoymiles_dtu:`)
+### `inverters:` (list, under `hoymiles_dtu_base:`)
 
 - **`id`** (**Required**, ID): used to attach `sensor:`/`text_sensor:`
   entities to this inverter.
@@ -136,7 +136,7 @@ want:
 
 ```yaml
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     ac_power: {name: "HM4 AC Power"}
     ac_voltage: {name: "HM4 AC Voltage"}
@@ -166,12 +166,12 @@ Two independent groups, selected by which ID you key the block on:
 
 ```yaml
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     status: {name: "HM4 Status"}       # "offline" / "online" / "producing"
     last_seen: {name: "HM4 Last Seen"} # seconds since the last good telemetry
 
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     last_rx_payload: {name: "DTU Last RX Payload"}   # hex dump, diagnostic
     last_radio_error: {name: "DTU Last Radio Error"} # diagnostic
@@ -189,13 +189,13 @@ populated by the `scan_inverters` action (see
 
 ### Actions
 
-**`hoymiles_dtu.radio_set_power_limit`** — sets the inverter's active-power
+**`hoymiles_dtu_base.radio_set_power_limit`** — sets the inverter's active-power
 limit via the DevControl protocol path. Non-blocking: it queues onto the same
 request state machine telemetry polling uses, so calling it never stalls the
 ESPHome loop, and it's automatically deferred if a telemetry exchange is
 already in flight.
 
-- `id` (**Required**): the `hoymiles_dtu:` hub to target.
+- `id` (**Required**): the `hoymiles_dtu_base:` hub to target.
 - `percent` (*Optional*, 0-100, default `100`, templatable): relative power
   limit.
 - `persistent` (*Optional*, boolean, default `true`, templatable): `true`
@@ -207,7 +207,7 @@ button:
   - platform: template
     name: "Limit to 80%"
     on_press:
-      - hoymiles_dtu.radio_set_power_limit:
+      - hoymiles_dtu_base.radio_set_power_limit:
           id: dtu
           percent: 80
           persistent: false
@@ -217,7 +217,7 @@ Only the first configured inverter can currently be targeted by this action
 (single-inverter limitation, matching how the DevControl exchange is wired
 today).
 
-**`hoymiles_dtu.scan_inverters`** — starts an active over-the-air discovery scan.
+**`hoymiles_dtu_base.scan_inverters`** — starts an active over-the-air discovery scan.
 It **transmits** the discovery requests the CCC report describes (see
 [Security: scanning for inverters](#security-scanning-for-inverters)), so it is
 only ever an on-demand action — there is no config option that would run it on a
@@ -225,7 +225,7 @@ timer. Non-blocking: it runs on the same radio state machine as telemetry, a
 probe at a time, and returns the radio to normal polling when the scan window
 ends.
 
-- `id` (**Required**): the `hoymiles_dtu:` hub to target.
+- `id` (**Required**): the `hoymiles_dtu_base:` hub to target.
 - `duration` (*Optional*, time period, default `20s`): how long to keep probing.
 - `commands` (*Optional*, list of `search_id` / `collect_info`, default both):
   which discovery command(s) to send.
@@ -235,7 +235,7 @@ button:
   - platform: template
     name: "Scan for inverters"
     on_press:
-      - hoymiles_dtu.scan_inverters:
+      - hoymiles_dtu_base.scan_inverters:
           id: dtu
           duration: 20s
           commands: [search_id, collect_info]
@@ -275,7 +275,7 @@ own DTU serial (embedded in every request), and `#` is a running count.
 
 ```yaml
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_detected: {name: "DTU Scan Detected", id: dtu_scan}
 ```
@@ -302,7 +302,7 @@ logs at `ERROR`.
 
 ```yaml
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_severity: {name: "DTU Scan Severity", id: dtu_scan_severity}
 
@@ -334,7 +334,7 @@ request and cannot control the inverter. Honest limitations:
 ## Security: scanning for inverters
 
 The active counterpart to detection. Where `scan_detection` listens, the
-**`hoymiles_dtu.scan_inverters`** action *transmits* the discovery requests
+**`hoymiles_dtu_base.scan_inverters`** action *transmits* the discovery requests
 themselves and reports the serials that answer — the same thing AhoyDTU,
 OpenDTU, and the CCC report's proof-of-concept scanner do. Two legitimate uses,
 both on hardware you own or are authorised to assess:
@@ -366,12 +366,12 @@ Results are published to two hub-level entities:
 
 ```yaml
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_found_count: {name: "DTU Scan Found"}   # unique inverters found this scan
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_result: {name: "DTU Scan Result"}       # each newly discovered inverter, one line
 ```
@@ -387,13 +387,13 @@ the label), `PID` is the model/product ID (`search_id` only; `-` for
 A scan is started by exactly one of three one-shot triggers — never a recurring
 timer:
 
-- the **`hoymiles_dtu.scan_inverters`** action (from any ESPHome automation);
+- the **`hoymiles_dtu_base.scan_inverters`** action (from any ESPHome automation);
 - a **template button** that calls it (press it when you physically add hardware);
 - the hub's **`scan_on_boot`** option, which runs a single scan a short delay
   after boot — handy for one-time onboarding of a new node:
 
 ```yaml
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   # ...
   scan_on_boot: true            # one scan ~45s after boot, then never again
@@ -416,7 +416,7 @@ another node's own `scan_detection`.
 ## How the HM RF protocol works
 
 This section is for anyone extending the component or debugging a link that
-won't acquire. All of it is implemented in `components/hoymiles_dtu/protocol.{h,cpp}`
+won't acquire. All of it is implemented in `components/hoymiles_dtu_base/protocol.{h,cpp}`
 (pure protocol/codec, unit-tested, no ESPHome or radio-hardware dependency)
 and `hoymiles_dtu.cpp` (the radio driver + async state machine).
 

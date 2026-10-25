@@ -37,9 +37,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO9
@@ -58,12 +58,12 @@ hoymiles_dtu:
       model: hm_1200
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_found_count: {name: "HM4 Scan Found"}
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_result: {name: "HM4 Scan Result"}
     last_rx_payload: {name: "DTU Last RX Payload"}

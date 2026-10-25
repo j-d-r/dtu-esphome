@@ -17,7 +17,7 @@ esphome:
     then:
       - delay: 40s
       - logger.log: "HIL: starting one-shot inverter scan"
-      - hoymiles_dtu.scan_inverters:
+      - hoymiles_dtu_base.scan_inverters:
           id: dtu
           duration: 20s
           commands: [search_id, collect_info]
@@ -47,9 +47,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: GPIO9
@@ -68,25 +68,25 @@ button:
   - platform: template
     name: "Scan for inverters"
     on_press:
-      - hoymiles_dtu.scan_inverters:
+      - hoymiles_dtu_base.scan_inverters:
           id: dtu
           duration: 20s
           commands: [search_id, collect_info]
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     ac_power: {name: "HM4 AC Power"}
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_found_count: {name: "HM4 Scan Found"}
     scan_severity: {name: "HM4 Scan Severity"}
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     inverter_id: hm4
     status: {name: "HM4 Status"}
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_result: {name: "HM4 Scan Result"}
     scan_detected: {name: "HM4 Scan Detected"}

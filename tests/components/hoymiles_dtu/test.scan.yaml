@@ -28,9 +28,9 @@ external_components:
   - source:
       type: local
       path: ../../../components
-    components: [hoymiles_dtu]
+    components: [hoymiles_dtu_base]
 
-hoymiles_dtu:
+hoymiles_dtu_base:
   id: dtu
   spi_id: dtu_spi
   cs_pin: ${cs_pin}
@@ -48,19 +48,19 @@ button:
   - platform: template
     name: "Scan for inverters"
     on_press:
-      - hoymiles_dtu.scan_inverters:
+      - hoymiles_dtu_base.scan_inverters:
           id: dtu
           duration: 20s
           commands: [search_id, collect_info]
 
 sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_found_count:
       name: "DTU Scan Found"
 
 text_sensor:
-  - platform: hoymiles_dtu
+  - platform: hoymiles_dtu_base
     dtu_id: dtu
     scan_result:
       name: "DTU Scan Result"
