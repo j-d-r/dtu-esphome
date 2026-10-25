@@ -30,11 +30,14 @@ models to a CMT2300A (`hoymiles_dtu_cmt:`).
 **HM (nRF24, `hoymiles_dtu_rf24:`)** — the families Ahoy handles, grouped by DC-input
 (channel) count, which is what the realtime payload layout depends on:
 
-| Channels | Models (`model:` value) |
-| --- | --- |
-| 1 | HM-300 (`hm_300`), HM-350 (`hm_350`), HM-400 (`hm_400`) |
-| 2 | HM-600 (`hm_600`), HM-700 (`hm_700`), HM-800 (`hm_800`) |
-| 4 | HM-1000 (`hm_1000`), HM-1200 (`hm_1200`), HM-1500 (`hm_1500`) |
+| Channels | Serial prefix | Models (`model:` value) |
+| --- | --- | --- |
+| 1 | 1121, 1122, 1022 | HM-300 (`hm_300`), HM-350 (`hm_350`), HM-400 (`hm_400`) |
+| 2 | 1141, 1142, 1042 | HM-600 (`hm_600`), HM-700 (`hm_700`), HM-800 (`hm_800`) |
+| 4 | 1161, 1162, 1062 | HM-1000 (`hm_1000`), HM-1200 (`hm_1200`), HM-1500 (`hm_1500`) |
+
+The 10xx HM prefixes are MI 3rd-generation inverters, which both Ahoy and
+OpenDTU treat as HM.
 
 **HMS (CMT2300A, `hoymiles_dtu_cmt:`)** — the HMS record layouts differ from the
 HM ones even at the same channel count, so each family is its own decoder. The
@@ -47,8 +50,8 @@ wrong):
 | --- | --- | --- |
 | 1 | 1124 | HMS-300 (`hms_300`), HMS-350 (`hms_350`), HMS-400 (`hms_400`), HMS-450 (`hms_450`), HMS-500 (`hms_500`) |
 | 1 | 1125, 1400 | HMS-450 v2 (`hms_450_v2`), HMS-500 v2 (`hms_500_v2`) |
-| 2 | 1143, 1144, 114A, 1410 | HMS-600 (`hms_600`), HMS-700 (`hms_700`), HMS-800 (`hms_800`), HMS-900 (`hms_900`), HMS-1000 (`hms_1000`) |
-| 4 | 1164, 1166, 1420 | HMS-1600 (`hms_1600`), HMS-1800 (`hms_1800`), HMS-2000 (`hms_2000`) |
+| 2 | 1143, 1144, 1146, 114A, 1410 | HMS-600 (`hms_600`), HMS-700 (`hms_700`), HMS-800 (`hms_800`), HMS-900 (`hms_900`), HMS-1000 (`hms_1000`) |
+| 4 | 1164, 1166, 1420, 1421 | HMS-1600 (`hms_1600`), HMS-1800 (`hms_1800`), HMS-2000 (`hms_2000`) |
 
 The `v2` models (serial prefix 1125/1400) report a single DC input in a
 2-channel-shaped record. Their DC and AC fields follow OpenDTU's layout; Ahoy

@@ -210,3 +210,19 @@ IAC/100, PAC/10, Q/10, F/100, PF/1000, T(`int16`)/10, EVT/1):
 `=CHn` means the input shares the paired channel's voltage (Ahoy `CALC_UDC_CH`).
 These offsets live in `hm_model_layout()` in `protocol.cpp` and are unit-tested in
 `tests/native/test_protocol.cpp`.
+
+## Extra serial prefixes, 2026-10-25
+
+Source: OpenDTU `lib/Hoymiles/src/inverters/{HM_*,HMS_*}.cpp` `isValidSerial()`,
+from a local OpenDTU checkout (fork `j-d-r/OpenDTU-private`, commit `8da432d5`);
+the older OpenDTU copy has the same serial rules.
+
+Prefixes accepted by the build-time model/serial check:
+
+- HMS 2-channel 1146 and HMS 4-channel 1421: OpenDTU only.
+- HM 1022 / 1042 / 1062 (1/2/4 channels): MI 3rd-generation inverters, which
+  OpenDTU (`HM_*::isValidSerial`) and Ahoy (`hmSystem.h`, serial byte 5 == 0x10
+  with `b4 & 0x03 == 0x02`) both treat as HM.
+- OpenDTU's HM rule is wider still (any `x12x` / `x14x` / `x16x` prefix not
+  claimed by an HMS family first); this component keeps an explicit list,
+  since the check only warns.

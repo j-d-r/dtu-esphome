@@ -120,6 +120,10 @@ and unit-tested in `tests/native/test_protocol.cpp`, including a real captured
 HM-1200 record. Live HIL for a 1-channel and 2-channel inverter still pending
 hardware.
 
+Added 2026-10-25: the build-time serial check also accepts the MI
+3rd-generation HM prefixes 1022/1042/1062 and the HMS prefixes 1146/1421.
+Details in `REFERENCE_NOTES.md`.
+
 Tasks:
 
 1. Add model metadata for channel count and payload offsets.
