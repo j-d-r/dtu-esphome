@@ -6,8 +6,7 @@
 #include "esphome/components/spi/spi.h"
 #include "esphome/core/gpio.h"
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 enum HmPaLevel : uint8_t {
   PA_MIN = 0,
@@ -23,8 +22,8 @@ static constexpr uint8_t HM_SCAN_CMD_COLLECT_INFO = 0x02;
 
 // DTU hub for HM-series inverters on an nRF24L01+ radio.
 class HoymilesDtuRf24 : public HoymilesDtuBase,
-                             public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
-                                                   spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_1MHZ> {
+                        public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
+                                              spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_1MHZ> {
  public:
   void set_ce_pin(GPIOPin *pin) { ce_pin_ = pin; }
   void set_irq_pin(GPIOPin *pin) {
@@ -68,7 +67,7 @@ class HoymilesDtuRf24 : public HoymilesDtuBase,
   void begin_exchange_();
   void end_exchange_();
   void consume_irq_();
-  static void irq_handler_(HoymilesDtuRf24 *arg);
+  static void irq_handler(HoymilesDtuRf24 *arg);
   void poll_tx_(uint32_t now);
   void poll_rx_(uint32_t now);
   void finish_request_(bool success, const char *error, uint32_t now);
@@ -108,7 +107,7 @@ class HoymilesDtuRf24 : public HoymilesDtuBase,
   void write_register_(uint8_t reg, const uint8_t *data, uint8_t len);
   uint8_t command_(uint8_t command);
   uint8_t command_(uint8_t command, const uint8_t *tx, uint8_t *rx, uint8_t len);
-  static bool plausible_status_(uint8_t status);
+  static bool plausible_status(uint8_t status);
 
   GPIOPin *ce_pin_{nullptr};
   GPIOPin *irq_pin_base_{nullptr};
@@ -167,5 +166,4 @@ class ScanInvertersAction : public Action<Ts...>, public Parented<HoymilesDtuRf2
   }
 };
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

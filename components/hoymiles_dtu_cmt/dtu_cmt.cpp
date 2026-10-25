@@ -3,8 +3,7 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 static const char *const TAG = "hoymiles_dtu";
 
@@ -42,7 +41,7 @@ void HoymilesDtuCmt::setup() {
 
   if (gpio3_pin_ != nullptr) {
     gpio3_pin_->setup();
-    gpio3_pin_->attach_interrupt(&HoymilesDtuCmt::gpio3_handler_, this, gpio::INTERRUPT_RISING_EDGE);
+    gpio3_pin_->attach_interrupt(&HoymilesDtuCmt::gpio3_handler, this, gpio::INTERRUPT_RISING_EDGE);
     gpio3_attached_ = true;
   } else if (gpio3_pin_base_ != nullptr) {
     gpio3_pin_base_->setup();
@@ -117,7 +116,8 @@ void HoymilesDtuCmt::dump_config() {
   LOG_PIN("  CSB Pin: ", this->csb_pin_);
   LOG_PIN("  FCSB Pin: ", this->fcsb_pin_);
   LOG_PIN("  GPIO3 Pin: ", this->gpio3_pin_base_);
-  ESP_LOGCONFIG(TAG, "  SPI transport: %s", radio_.using_hardware_spi() ? "hardware (3-wire half-duplex)" : "bit-banged");
+  ESP_LOGCONFIG(TAG, "  SPI transport: %s",
+                radio_.using_hardware_spi() ? "hardware (3-wire half-duplex)" : "bit-banged");
   ESP_LOGCONFIG(TAG, "  Packet-received wake-up: %s", gpio3_attached_ ? "GPIO3 interrupt" : "flag polling");
   ESP_LOGCONFIG(TAG, "  Radio: %s", radio_ok_ ? "CMT2300A connected" : "not connected");
   const char *region = region_ == HM_REGION_EU
@@ -394,10 +394,9 @@ void HoymilesDtuCmt::exit_monitor_() {
   monitoring_ = false;
 }
 
-void IRAM_ATTR HoymilesDtuCmt::gpio3_handler_(HoymilesDtuCmt *arg) {
+void IRAM_ATTR HoymilesDtuCmt::gpio3_handler(HoymilesDtuCmt *arg) {
   arg->packet_irq_ = true;
   arg->enable_loop_soon_any_context();
 }
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

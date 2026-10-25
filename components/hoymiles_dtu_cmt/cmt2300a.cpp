@@ -3,13 +3,12 @@
 #include "esphome/core/hal.h"
 #include "esphome/core/log.h"
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 static const char *const TAG = "hoymiles_dtu.cmt";
 
-// Bit-bang half period (fallback transport). The CMT2300A samples SDIO on the rising SCLK edge and needs >=0.25 us setup,
-// hold and chip-select spacing; 1 us per phase gives a ~330 kHz clock with a wide margin.
+// Bit-bang half period (fallback transport). The CMT2300A samples SDIO on the rising SCLK edge and needs >=0.25 us
+// setup, hold and chip-select spacing; 1 us per phase gives a ~330 kHz clock with a wide margin.
 static constexpr uint32_t SPI_PHASE_US = 1;
 // The FIFO chip select must stay high for >2 us between bytes (datasheet; both reference drivers use
 // the same figure via cs_ena_posttrans).
@@ -180,26 +179,26 @@ bool Cmt2300a::chip_present() {
 }
 
 void Cmt2300a::configure_banks_() {
-  for (uint8_t i = 0; i < sizeof(CMT_BANK_CMT); i++) {
+  for (size_t i = 0; i < sizeof(CMT_BANK_CMT); i++) {
     write_register(CMT_BANK_CMT_ADDR + i, CMT_BANK_CMT[i]);
   }
-  for (uint8_t i = 0; i < sizeof(CMT_BANK_SYSTEM); i++) {
+  for (size_t i = 0; i < sizeof(CMT_BANK_SYSTEM); i++) {
     write_register(CMT_BANK_SYSTEM_ADDR + i, CMT_BANK_SYSTEM[i]);
   }
   const uint8_t *frequency = region_ == HM_REGION_EU ? CMT_BANK_FREQUENCY_860 : CMT_BANK_FREQUENCY_900;
-  for (uint8_t i = 0; i < sizeof(CMT_BANK_FREQUENCY_860); i++) {
+  for (size_t i = 0; i < sizeof(CMT_BANK_FREQUENCY_860); i++) {
     write_register(CMT_BANK_FREQUENCY_ADDR + i, frequency[i]);
   }
-  for (uint8_t i = 0; i < sizeof(CMT_BANK_DATA_RATE); i++) {
+  for (size_t i = 0; i < sizeof(CMT_BANK_DATA_RATE); i++) {
     write_register(CMT_BANK_DATA_RATE_ADDR + i, CMT_BANK_DATA_RATE[i]);
   }
   if (region_ != HM_REGION_EU) {
     write_register(CMT_REG_FSK4, 0x0B);
   }
-  for (uint8_t i = 0; i < sizeof(CMT_BANK_BASEBAND); i++) {
+  for (size_t i = 0; i < sizeof(CMT_BANK_BASEBAND); i++) {
     write_register(CMT_BANK_BASEBAND_ADDR + i, CMT_BANK_BASEBAND[i]);
   }
-  for (uint8_t i = 0; i < sizeof(CMT_BANK_TX); i++) {
+  for (size_t i = 0; i < sizeof(CMT_BANK_TX); i++) {
     write_register(CMT_BANK_TX_ADDR + i, CMT_BANK_TX[i]);
   }
 }
@@ -617,5 +616,4 @@ void Cmt2300a::read_fifo_(uint8_t *data, uint8_t len) {
   sdio_->digital_write(true);
 }
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu
