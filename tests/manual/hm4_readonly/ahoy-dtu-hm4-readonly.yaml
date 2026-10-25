@@ -53,7 +53,7 @@ hoymiles_dtu_rf24:
   scan_detection: true
   inverters:
     - id: hm4
-      # Printed inverter serial (packed BCD under the hood). Move to !secret hoymiles_hm4_serial if
+      # Printed inverter serial (hexadecimal digits, quoted). Move to !secret hoymiles_hm4_serial if
       # you prefer to keep it out of the config.
       serial: "116182806989"
       model: hm_1200

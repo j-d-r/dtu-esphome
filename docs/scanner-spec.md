@@ -16,8 +16,8 @@ of Hoymiles Microinverters"* (`docs/hoymiles_dtu_vuln.pdf`), section 4.
 Two legitimate uses, both on hardware you own or are authorised to assess:
 
 1. **Onboarding.** Discover the serial and model of your own inverter over the
-   air instead of reading the packed-BCD label by eye. Getting that serial wrong
-   is this project's original bug (see `hm_radio_id_from_serial` / `parse_serial_bcd`
+   air instead of reading the label by eye. Getting that serial wrong
+   is this project's original bug (see `hm_radio_id_from_serial` / `parse_serial`
    and the README addressing note); a scan reports it directly.
 2. **Exposure auditing.** Enumerate the Hoymiles inverters within RF range of
    your own site to understand what an attacker with a €5 module would see. This
@@ -64,11 +64,11 @@ DTU last polled it; that is why the `0x06` fallback below exists.
 Reply — `hm_parse_search_id_response` (report fig. 3, HMS-600):
 
 ```
-RX:  82 <serial4 BCD> <dtu4> <pid2> <serial4 BCD> CRC8    (16 bytes)
+RX:  82 <serial4> <dtu4> <pid2> <serial4> CRC8    (16 bytes)
      │  └─────┬─────┘ └─┬──┘ └─┬─┘
      │        │         │      └ model / product ID (PID)
      │        │         └ echoed DTU address (our scan sender id)
-     │        └ last 8 printed serial digits, packed BCD
+     │        └ last 8 printed serial digits (hex)
      └ 0x82 = 0x02 | all-frames (response bit set)
 ```
 
@@ -84,14 +84,14 @@ TX:  06 00 00 00 00 00  <dtu_serial BE>  00  CRC8          (12 bytes)
 Reply — `hm_parse_collect_info_response` (report section 4.3):
 
 ```
-RX:  06 00 00 00 00  <serial4 BCD>  00  CRC8               (11 bytes)
+RX:  06 00 00 00 00  <serial4>  00  CRC8               (11 bytes)
      └ observed opcode 0x06 (a firmware quirk; a spec-correct reply would set the
        response bit, 0x86 — the parser accepts both). No PID/payload.
 ```
 
 ### What a scan learns, and what it does not
 
-A reply carries only the **last 8 printed serial digits** (packed BCD). That is
+A reply carries only the **last 8 printed serial digits** (hexadecimal). That is
 `serial & 0xFFFFFFFF` and equals the low 4 bytes of the radio address, which is
 all the radio addressing actually uses (`hm_radio_id_from_serial` ignores the
 high digits). The printed **4-digit model prefix is not transmitted.** So:

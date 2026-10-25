@@ -205,11 +205,11 @@ const char *hm_severity_to_string(HmSeverity severity);
 // --- Active discovery / scanner (transmit) -------------------------------------------------------
 // The transmit-side counterpart to hm_classify_sniffed_packet: build the discovery requests the CCC
 // report (section 4) documents for harvesting inverter serials, and parse the replies. Intended for
-// discovering the serial/model of an inverter you own (so you need not read the packed-BCD label by
-// eye) and for auditing your own RF exposure. It exploits the same unauthenticated-protocol flaw the
-// report describes; only run it against inverters you own or are authorised to assess.
+// discovering the serial/model of an inverter you own (so you need not read the label by eye) and
+// for auditing your own RF exposure. It exploits the same unauthenticated-protocol flaw the report
+// describes; only run it against inverters you own or are authorised to assess.
 struct HmDiscoveredInverter {
-  // Last 8 printed serial digits, packed BCD. This equals serial & 0xFFFFFFFF and the low 4 radio
+  // Last 8 printed serial digits (hexadecimal). This equals serial & 0xFFFFFFFF and the low 4 radio
   // address bytes; the printed 4-digit model prefix is not carried over the air.
   uint32_t serial_suffix{0};
   uint16_t pid{0};                   // model/product ID (Search-ID reply only; 0 for a collect-info reply)

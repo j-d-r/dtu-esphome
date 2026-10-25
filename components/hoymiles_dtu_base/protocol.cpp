@@ -636,7 +636,8 @@ uint8_t hm_build_collect_info_request(uint32_t dtu_serial, uint8_t *buffer, size
 
 bool hm_parse_search_id_response(const uint8_t *packet, uint8_t len, HmDiscoveredInverter *out) {
   // Reply layout (CCC report fig. 3, HMS-600 RX): [0]=0x82 (0x02 | all-frames), [1..4]=serial suffix
-  // BCD, [5..8]=echoed DTU address, [9..10]=model PID, then a serial echo, then a trailing CRC8.
+  // (last 8 printed digits, hex), [5..8]=echoed DTU address, [9..10]=model PID, then a serial echo,
+  // then a trailing CRC8.
   if (packet == nullptr || out == nullptr || len < 11) {
     return false;
   }
@@ -658,7 +659,7 @@ bool hm_parse_search_id_response(const uint8_t *packet, uint8_t len, HmDiscovere
 
 bool hm_parse_collect_info_response(const uint8_t *packet, uint8_t len, HmDiscoveredInverter *out) {
   // Reply layout (CCC report section 4.3 RX): [0]=0x06 (a firmware quirk — a spec-correct reply
-  // would set the response bit, 0x86), [1..4]=0, [5..8]=serial suffix BCD, then a trailing CRC8. No
+  // would set the response bit, 0x86), [1..4]=0, [5..8]=serial suffix (hex), then a trailing CRC8. No
   // PID/payload, so the model is not learned from this path.
   if (packet == nullptr || out == nullptr || len < 11) {
     return false;

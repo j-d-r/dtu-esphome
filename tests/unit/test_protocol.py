@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 
 def load_protocol_module():
     component = Path(__file__).parents[2] / "components" / "hoymiles_dtu_base"
@@ -12,16 +14,25 @@ def load_protocol_module():
     return module
 
 
-def test_inverter_config_serial_is_bcd_packed():
+def test_inverter_config_serial_is_hex():
     # The inverter `serial:` config (validate_serial in __init__.py) interprets the
-    # printed digits as packed BCD, exactly like Ahoy. Guard against a regression
+    # printed digits as hexadecimal, exactly like Ahoy. Guard against a regression
     # back to decimal, which would transmit to the wrong nRF address (01 0D 08 F1 CD).
     protocol = load_protocol_module()
-    packed = protocol.parse_serial_bcd("116182806989")
+    packed = protocol.parse_serial("116182806989")
     assert packed == 0x116182806989
     radio_id = protocol.radio_id_from_low32(packed)
     address = bytes((radio_id >> (8 * i)) & 0xFF for i in range(5))
     assert address == bytes.fromhex("01 82 80 69 89")
+
+
+def test_parse_serial_rejects_bad_input():
+    protocol = load_protocol_module()
+    assert protocol.parse_serial("114A12345678") == 0x114A12345678
+    assert protocol.parse_serial(" 114a12345678 ") == 0x114A12345678
+    for bad in (116182806989, "11618280698", "1161828069890", "11618280698G"):
+        with pytest.raises(ValueError):
+            protocol.parse_serial(bad)
 
 
 def test_crc_known_vectors():
@@ -33,7 +44,7 @@ def test_crc_known_vectors():
 def test_realtime_request_uses_ahoy_byte_order():
     protocol = load_protocol_module()
     inverter_radio_id = protocol.radio_id_from_low32(
-        protocol.parse_serial_bcd("116182806989")
+        protocol.parse_serial("116182806989")
     )
     request = protocol.build_realtime_request(
         inverter_radio_id, dtu_serial=0x83915460, timestamp=0x12345678

@@ -9,7 +9,7 @@ Target hardware:
 Before flashing:
 
 - Add `hoymiles_hm4_serial` to the ESPHome secrets file as the 12-digit serial
-  exactly as printed on the inverter (interpreted as packed BCD, like Ahoy).
+  exactly as printed on the inverter, quoted (the digits are hexadecimal, like Ahoy).
 - Confirm wiring: CE GPIO12, CS GPIO9, SCK GPIO5, MOSI GPIO11, MISO GPIO16,
   IRQ GPIO7.
 

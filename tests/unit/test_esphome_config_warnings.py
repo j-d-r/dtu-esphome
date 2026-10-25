@@ -4,6 +4,8 @@ Sensor channels that do not match the inverter model's DC inputs are reported as
 warnings, and the config must still be accepted (the model may be the wrong part, not
 the channels): a channel the model does not have only ever reports NaN, and a channel
 the model has but the config omits is never published.
+
+A serial whose printed prefix is not one the model ships with is reported the same way.
 """
 
 import shutil
@@ -162,3 +164,53 @@ def test_channel_warnings(tmp_path, config_text, extra, missing):
             # Reported once per inverter, however many sensor entries it has.
             assert result.stdout.count(marker) == 1, result.stdout
             assert expected in result.stdout, result.stdout
+
+
+PREFIX = "is normally sold with serial prefix"
+
+# (config, expected serial-prefix warning text or None)
+PREFIX_CASES = [
+    pytest.param(
+        CMT_HUB.format(serial="114a12345678", model="hms_800"),
+        None,
+        id="hms-prefix-114A-lower-case",
+    ),
+    pytest.param(
+        NRF24_HUB.format(serial="104212345678", model="hm_800"),
+        None,
+        id="hm-mi-3rd-gen-prefix",
+    ),
+    pytest.param(
+        CMT_HUB.format(serial="114512345678", model="hms_800"),
+        "starts with 1145, but model hms_800",
+        id="hms-unknown-prefix",
+    ),
+    pytest.param(
+        NRF24_HUB.format(serial="116112345678", model="hm_400"),
+        "1022 or 1121 or 1122",
+        id="hm-4ch-serial-on-1ch-model",
+    ),
+]
+
+
+@pytest.mark.parametrize("config_text,expected", PREFIX_CASES)
+def test_serial_prefix_warning(tmp_path, config_text, expected):
+    esphome = shutil.which("esphome")
+    if esphome is None:
+        pytest.skip("esphome executable not found")
+    config = tmp_path / "case.yaml"
+    config.write_text(HEADER + "\n" + config_text)
+    result = subprocess.run(
+        [esphome, "config", str(config)],
+        cwd=REPO,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout
+    if expected is None:
+        assert PREFIX not in result.stdout, result.stdout
+    else:
+        assert PREFIX in result.stdout, result.stdout
+        assert expected in result.stdout, result.stdout

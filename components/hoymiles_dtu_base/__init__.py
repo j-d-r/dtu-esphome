@@ -15,7 +15,7 @@ from .const import (
     CONF_SCAN_DETECTION,
     CONF_SERIAL,
 )
-from .protocol import parse_serial_bcd
+from .protocol import parse_serial
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,49 +50,49 @@ class ModelInfo(NamedTuple):
     model: MockObj  # HmModel enum value
     radio: str  # NRF24 or CMT
     channels: int  # channel count
-    prefixes: tuple[int, ...]  # serial prefixes
+    prefixes: tuple[str, ...]  # serial prefixes, as printed (first 4 hex digits)
 
 
 MODELS = {
-    "hm_300": ModelInfo(HmModel.HM_300, NRF24, 1, (0x1022, 0x1121, 0x1122)),
-    "hm_350": ModelInfo(HmModel.HM_350, NRF24, 1, (0x1022, 0x1121, 0x1122)),
-    "hm_400": ModelInfo(HmModel.HM_400, NRF24, 1, (0x1022, 0x1121, 0x1122)),
-    "hm_600": ModelInfo(HmModel.HM_600, NRF24, 2, (0x1042, 0x1141, 0x1142)),
-    "hm_700": ModelInfo(HmModel.HM_700, NRF24, 2, (0x1042, 0x1141, 0x1142)),
-    "hm_800": ModelInfo(HmModel.HM_800, NRF24, 2, (0x1042, 0x1141, 0x1142)),
-    "hm_1000": ModelInfo(HmModel.HM_1000, NRF24, 4, (0x1062, 0x1161, 0x1162)),
-    "hm_1200": ModelInfo(HmModel.HM_1200, NRF24, 4, (0x1062, 0x1161, 0x1162)),
-    "hm_1500": ModelInfo(HmModel.HM_1500, NRF24, 4, (0x1062, 0x1161, 0x1162)),
-    "herf_300": ModelInfo(HmModel.HERF_300, NRF24, 1, (0x2841,)),
-    "herf_600": ModelInfo(HmModel.HERF_600, NRF24, 2, (0x2821,)),
-    "herf_800": ModelInfo(HmModel.HERF_800, NRF24, 2, (0x2821,)),
-    "herf_1600": ModelInfo(HmModel.HERF_1600, NRF24, 4, (0x2801,)),
-    "herf_1800": ModelInfo(HmModel.HERF_1800, NRF24, 4, (0x2801,)),
-    "hms_300": ModelInfo(HmModel.HMS_300, CMT, 1, (0x1124,)),
-    "hms_350": ModelInfo(HmModel.HMS_350, CMT, 1, (0x1124,)),
-    "hms_400": ModelInfo(HmModel.HMS_400, CMT, 1, (0x1124,)),
-    "hms_450": ModelInfo(HmModel.HMS_450, CMT, 1, (0x1124,)),
-    "hms_500": ModelInfo(HmModel.HMS_500, CMT, 1, (0x1124,)),
-    "hms_450_v2": ModelInfo(HmModel.HMS_450_V2, CMT, 1, (0x1125, 0x1400)),
-    "hms_500_v2": ModelInfo(HmModel.HMS_500_V2, CMT, 1, (0x1125, 0x1400)),
+    "hm_300": ModelInfo(HmModel.HM_300, NRF24, 1, ("1022", "1121", "1122")),
+    "hm_350": ModelInfo(HmModel.HM_350, NRF24, 1, ("1022", "1121", "1122")),
+    "hm_400": ModelInfo(HmModel.HM_400, NRF24, 1, ("1022", "1121", "1122")),
+    "hm_600": ModelInfo(HmModel.HM_600, NRF24, 2, ("1042", "1141", "1142")),
+    "hm_700": ModelInfo(HmModel.HM_700, NRF24, 2, ("1042", "1141", "1142")),
+    "hm_800": ModelInfo(HmModel.HM_800, NRF24, 2, ("1042", "1141", "1142")),
+    "hm_1000": ModelInfo(HmModel.HM_1000, NRF24, 4, ("1062", "1161", "1162")),
+    "hm_1200": ModelInfo(HmModel.HM_1200, NRF24, 4, ("1062", "1161", "1162")),
+    "hm_1500": ModelInfo(HmModel.HM_1500, NRF24, 4, ("1062", "1161", "1162")),
+    "herf_300": ModelInfo(HmModel.HERF_300, NRF24, 1, ("2841",)),
+    "herf_600": ModelInfo(HmModel.HERF_600, NRF24, 2, ("2821",)),
+    "herf_800": ModelInfo(HmModel.HERF_800, NRF24, 2, ("2821",)),
+    "herf_1600": ModelInfo(HmModel.HERF_1600, NRF24, 4, ("2801",)),
+    "herf_1800": ModelInfo(HmModel.HERF_1800, NRF24, 4, ("2801",)),
+    "hms_300": ModelInfo(HmModel.HMS_300, CMT, 1, ("1124",)),
+    "hms_350": ModelInfo(HmModel.HMS_350, CMT, 1, ("1124",)),
+    "hms_400": ModelInfo(HmModel.HMS_400, CMT, 1, ("1124",)),
+    "hms_450": ModelInfo(HmModel.HMS_450, CMT, 1, ("1124",)),
+    "hms_500": ModelInfo(HmModel.HMS_500, CMT, 1, ("1124",)),
+    "hms_450_v2": ModelInfo(HmModel.HMS_450_V2, CMT, 1, ("1125", "1400")),
+    "hms_500_v2": ModelInfo(HmModel.HMS_500_V2, CMT, 1, ("1125", "1400")),
     "hms_600": ModelInfo(
-        HmModel.HMS_600, CMT, 2, (0x1143, 0x1144, 0x1146, 0x114A, 0x1410)
+        HmModel.HMS_600, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
     ),
     "hms_700": ModelInfo(
-        HmModel.HMS_700, CMT, 2, (0x1143, 0x1144, 0x1146, 0x114A, 0x1410)
+        HmModel.HMS_700, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
     ),
     "hms_800": ModelInfo(
-        HmModel.HMS_800, CMT, 2, (0x1143, 0x1144, 0x1146, 0x114A, 0x1410)
+        HmModel.HMS_800, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
     ),
     "hms_900": ModelInfo(
-        HmModel.HMS_900, CMT, 2, (0x1143, 0x1144, 0x1146, 0x114A, 0x1410)
+        HmModel.HMS_900, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
     ),
     "hms_1000": ModelInfo(
-        HmModel.HMS_1000, CMT, 2, (0x1143, 0x1144, 0x1146, 0x114A, 0x1410)
+        HmModel.HMS_1000, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
     ),
-    "hms_1600": ModelInfo(HmModel.HMS_1600, CMT, 4, (0x1164, 0x1166, 0x1420, 0x1421)),
-    "hms_1800": ModelInfo(HmModel.HMS_1800, CMT, 4, (0x1164, 0x1166, 0x1420, 0x1421)),
-    "hms_2000": ModelInfo(HmModel.HMS_2000, CMT, 4, (0x1164, 0x1166, 0x1420, 0x1421)),
+    "hms_1600": ModelInfo(HmModel.HMS_1600, CMT, 4, ("1164", "1166", "1420", "1421")),
+    "hms_1800": ModelInfo(HmModel.HMS_1800, CMT, 4, ("1164", "1166", "1420", "1421")),
+    "hms_2000": ModelInfo(HmModel.HMS_2000, CMT, 4, ("1164", "1166", "1420", "1421")),
 }
 
 
@@ -109,9 +109,18 @@ def find_inverter_model(full_config, inverter_id):
 
 
 def validate_serial(value):
-    # Hoymiles serials are packed BCD: the printed digits map directly to the
-    # radio-address bytes (exactly like Ahoy, which parses them as base-16).
-    return parse_serial_bcd(value)
+    # Hoymiles serials are hexadecimal: the printed digits map directly to the
+    # radio-address bytes (exactly like Ahoy, which parses them as base-16). Only
+    # accept a string: unquoted, YAML reads an all-digit serial as a decimal number.
+    if not isinstance(value, str):
+        raise cv.Invalid(
+            f'serial must be a quoted string, e.g. serial: "{value}" - unquoted, '
+            "YAML reads it as a decimal number"
+        )
+    try:
+        return parse_serial(value)
+    except ValueError as err:
+        raise cv.Invalid(str(err)) from err
 
 
 def _validate_inverter(config):
@@ -121,11 +130,11 @@ def _validate_inverter(config):
     # lists are what OpenDTU and Ahoy know about, and Hoymiles keeps adding
     # hardware revisions.
     prefixes = MODELS[config[CONF_MODEL]].prefixes
-    prefix = (config[CONF_SERIAL] >> 32) & 0xFFFF
+    prefix = f"{config[CONF_SERIAL] >> 32:04X}"
     if prefix not in prefixes:
-        expected = " or ".join(f"{value:04X}" for value in prefixes)
+        expected = " or ".join(prefixes)
         _LOGGER.warning(
-            "hoymiles_dtu_base: inverter serial %012X starts with %04X, but model %s "
+            "hoymiles_dtu_base: inverter serial %012X starts with %s, but model %s "
             "is normally sold with serial prefix %s. Double-check the label - a "
             "mismatched model decodes the telemetry with the wrong field offsets.",
             config[CONF_SERIAL],
