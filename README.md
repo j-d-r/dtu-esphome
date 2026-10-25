@@ -314,9 +314,17 @@ sensor:
 ```
 
 `channels` is a list of per-DC-input entries; `number` (1-4, **Required**)
-should match the inverter's model channel count (1/2/4) — there is no
-separate validation error for a mismatch, but any `number` beyond what the
-model actually reports publishes `NaN` instead of a real reading.
+should cover the inverter model's DC inputs (1, 2 or 4, as OpenDTU defines them
+per model). The build warns, without failing, when they don't match:
+
+- a `number` beyond the model's inputs: its sensors only ever publish `NaN`;
+- some channels declared but not all of the model's inputs: the missing ones
+  are never published. Declaring no channels at all is taken as deliberate and
+  does not warn.
+
+Channels may be spread over several `sensor:` entries for the same
+`inverter_id` (the `configs/` packages do that); the check looks at all of them
+together and reports once per inverter.
 
 `signal_strength` is the RSSI (dBm) of the last accepted reply. Only the
 CMT2300A reports per-packet RSSI, so on an nRF24 (HM) hub the sensor is created

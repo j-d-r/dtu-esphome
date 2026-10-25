@@ -112,6 +112,38 @@ MODEL_SERIAL_PREFIXES = {
     "herf_1800": (0x2801,),
 }
 
+# DC inputs per model, as OpenDTU's inverter classes define them
+# (HM_/HMS_/HERF_{1,2,4}CH, HMS_1CHv2). Must match hm_model_channel_count() in
+# protocol.cpp; a unit test checks it. The HMS-450/500 v2 record is shaped like a
+# 2-channel one but carries a single DC input.
+MODEL_CHANNEL_COUNTS = {
+    **dict.fromkeys(("hm_300", "hm_350", "hm_400"), 1),
+    **dict.fromkeys(("hm_600", "hm_700", "hm_800"), 2),
+    **dict.fromkeys(("hm_1000", "hm_1200", "hm_1500"), 4),
+    **dict.fromkeys(("hms_300", "hms_350", "hms_400", "hms_450", "hms_500"), 1),
+    **dict.fromkeys(("hms_450_v2", "hms_500_v2"), 1),
+    **dict.fromkeys(("hms_600", "hms_700", "hms_800", "hms_900", "hms_1000"), 2),
+    **dict.fromkeys(("hms_1600", "hms_1800", "hms_2000"), 4),
+    **dict.fromkeys(("herf_300",), 1),
+    **dict.fromkeys(("herf_600", "herf_800"), 2),
+    **dict.fromkeys(("herf_1600", "herf_1800"), 4),
+}
+
+# The radio hub components whose `inverters:` lists define the inverters.
+HUB_DOMAINS = ("hoymiles_dtu_rf24", "hoymiles_dtu_cmt")
+
+
+def find_inverter_model(full_config, inverter_id):
+    """Model key (e.g. "hms_1000") of the inverter with this id, or None."""
+    for domain in HUB_DOMAINS:
+        hub = full_config.get(domain)
+        if hub is None:
+            continue
+        for inverter in hub.get(CONF_INVERTERS, []):
+            if inverter[CONF_ID].id == inverter_id.id:
+                return str(inverter[CONF_MODEL])
+    return None
+
 
 def validate_serial(value):
     # Hoymiles serials are packed BCD: the printed digits map directly to the

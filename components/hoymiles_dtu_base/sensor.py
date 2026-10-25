@@ -1,8 +1,12 @@
+import logging
+
 import esphome.codegen as cg
 import esphome.config_validation as cv
+import esphome.final_validate as fv
 from esphome.components import sensor
 from esphome.const import (
     CONF_NUMBER,
+    CONF_PLATFORM,
     CONF_SIGNAL_STRENGTH,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
@@ -27,8 +31,14 @@ from esphome.const import (
     UNIT_WATT,
     UNIT_WATT_HOURS,
 )
+from esphome.core import CORE
 
-from . import HoymilesDtuBase, HoymilesDtuInverter
+from . import (
+    MODEL_CHANNEL_COUNTS,
+    HoymilesDtuBase,
+    HoymilesDtuInverter,
+    find_inverter_model,
+)
 from .const import (
     CONF_AC_CURRENT,
     CONF_AC_FREQUENCY,
@@ -187,6 +197,77 @@ CONFIG_SCHEMA = cv.All(
     ),
     validate_sensor_config,
 )
+
+
+_LOGGER = logging.getLogger(__name__)
+
+
+# Inverter ids whose channels were already checked during this config run. The check
+# looks at every sensor entry of an inverter at once (packages split them across
+# entries), so it only needs to run - and warn - once per inverter.
+_CHECKED_KEY = "hoymiles_dtu_base_channels_checked"
+
+
+def _declared_channels(full_config, inverter_id):
+    """Channel numbers declared for this inverter in any hoymiles_dtu_base sensor."""
+    numbers = set()
+    for entry in full_config.get("sensor", []):
+        if entry.get(CONF_PLATFORM) != "hoymiles_dtu_base":
+            continue
+        if CONF_INVERTER_ID not in entry or entry[CONF_INVERTER_ID].id != inverter_id:
+            continue
+        numbers.update(channel[CONF_NUMBER] for channel in entry.get(CONF_CHANNELS, []))
+    return numbers
+
+
+def _check_channels(config):
+    # Compare the declared channels with the model's DC inputs. Only warn, like the
+    # serial-prefix check: the model may be the wrong part, not the channels.
+    if CONF_INVERTER_ID not in config:
+        return config
+    inverter_id = config[CONF_INVERTER_ID].id
+    checked = CORE.data.setdefault(_CHECKED_KEY, set())
+    if inverter_id in checked:
+        return config
+    checked.add(inverter_id)
+
+    full_config = fv.full_config.get()
+    model = find_inverter_model(full_config, config[CONF_INVERTER_ID])
+    count = MODEL_CHANNEL_COUNTS.get(model)
+    declared = _declared_channels(full_config, inverter_id)
+    if count is None or not declared:
+        # No channels at all reads as a deliberate choice (AC values only).
+        return config
+    inputs = f"{count} DC input{'' if count == 1 else 's'}"
+
+    def channel_list(numbers):
+        word = "channel" if len(numbers) == 1 else "channels"
+        return f"{word} {', '.join(map(str, numbers))}"
+
+    if extra := sorted(n for n in declared if n > count):
+        _LOGGER.warning(
+            "hoymiles_dtu_base: inverter %s (model %s) has %s, so its %s sensors "
+            "will only ever report NaN (unknown). Check the model or remove them.",
+            inverter_id,
+            model,
+            inputs,
+            channel_list(extra),
+        )
+    if missing := [n for n in range(1, count + 1) if n not in declared]:
+        _LOGGER.warning(
+            "hoymiles_dtu_base: inverter %s (model %s) has %s, but no sensors are "
+            "declared for %s. Check the model, or add them (with the packages: use "
+            "the inverter_%dch.yaml that matches the model).",
+            inverter_id,
+            model,
+            inputs,
+            channel_list(missing),
+            count,
+        )
+    return config
+
+
+FINAL_VALIDATE_SCHEMA = _check_channels
 
 
 async def to_code(config):
