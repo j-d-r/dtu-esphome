@@ -3,12 +3,14 @@ import esphome.config_validation as cv
 from esphome.components import sensor
 from esphome.const import (
     CONF_NUMBER,
+    CONF_SIGNAL_STRENGTH,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_FREQUENCY,
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_POWER_FACTOR,
     DEVICE_CLASS_REACTIVE_POWER,
+    DEVICE_CLASS_SIGNAL_STRENGTH,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_VOLTAGE,
     ENTITY_CATEGORY_DIAGNOSTIC,
@@ -16,6 +18,7 @@ from esphome.const import (
     STATE_CLASS_TOTAL_INCREASING,
     UNIT_AMPERE,
     UNIT_CELSIUS,
+    UNIT_DECIBEL_MILLIWATT,
     UNIT_EMPTY,
     UNIT_HERTZ,
     UNIT_KILOWATT_HOURS,
@@ -100,6 +103,15 @@ SENSOR_TYPES = {
         accuracy_decimals=3,
         device_class=DEVICE_CLASS_ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    # Only the CMT2300A reports per-packet RSSI, so this stays empty on an
+    # nRF24 (HM) hub.
+    CONF_SIGNAL_STRENGTH: sensor.sensor_schema(
+        unit_of_measurement=UNIT_DECIBEL_MILLIWATT,
+        accuracy_decimals=0,
+        device_class=DEVICE_CLASS_SIGNAL_STRENGTH,
+        state_class=STATE_CLASS_MEASUREMENT,
+        entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
     ),
 }
 

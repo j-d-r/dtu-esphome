@@ -4,9 +4,11 @@ from esphome import automation, pins
 from esphome.components import spi
 from esphome.components.hoymiles_dtu_base import (
     BASE_SCHEMA,
+    HM_MODEL_OPTIONS,
     HoymilesDtuBase,
     hoymiles_dtu_ns,
     register_hub,
+    validate_inverter_models,
 )
 from esphome.const import CONF_DELAY, CONF_ID
 
@@ -89,7 +91,10 @@ _HUB_SCHEMA = BASE_SCHEMA.extend(
     )
 )
 
-CONFIG_SCHEMA = _HUB_SCHEMA
+CONFIG_SCHEMA = cv.All(
+    _HUB_SCHEMA,
+    validate_inverter_models(HM_MODEL_OPTIONS, "CMT2300A", "hoymiles_dtu_cmt"),
+)
 
 FINAL_VALIDATE_SCHEMA = spi.final_validate_device_schema(
     "hoymiles_dtu_rf24", require_miso=True, require_mosi=True
@@ -123,7 +128,7 @@ async def to_code(config):
 
 # Active over-the-air discovery scan. Transmits, so it only runs on an explicit
 # one-shot trigger (this action, a button, or scan_on_boot) - never a recurring timer.
-# See docs/scanner-spec.md.
+# nRF24 (HM) only; the CMT2300A hub has no scanner. See docs/scanner-spec.md.
 SCAN_INVERTERS_ACTION_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.use_id(HoymilesDtuRf24),

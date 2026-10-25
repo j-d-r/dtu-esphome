@@ -1,0 +1,14 @@
+substitutions:
+  board: esp32dev
+  framework: arduino
+
+packages:
+  hms: !include test.hms-cmt.yaml
+
+# A `spi:` bus for some other device next to the CMT2300A. The bus is validated first and takes
+# SPI2, so the hub's `interface: any` has to land on SPI3.
+spi:
+  id: other_spi
+  clk_pin: GPIO18
+  mosi_pin: GPIO23
+  miso_pin: GPIO19

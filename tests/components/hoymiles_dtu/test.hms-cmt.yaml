@@ -1,0 +1,80 @@
+substitutions:
+  board: esp32dev
+  framework: arduino
+  # CMT2300A 3-wire SPI. Same default pinout Ahoy/OpenDTU use on their ESP32 HMS boards.
+  sclk_pin: GPIO12
+  sdio_pin: GPIO14
+  csb_pin: GPIO27
+  fcsb_pin: GPIO26
+  gpio3_pin: GPIO34
+
+esphome:
+  name: hoymiles-dtu-hms
+
+esp32:
+  board: ${board}
+  framework:
+    type: ${framework}
+
+logger:
+
+external_components:
+  - source:
+      type: local
+      path: ../../../components
+    components: [hoymiles_dtu_base, hoymiles_dtu_cmt]
+
+# HMS inverter on a CMT2300A radio. No `spi:` bus at all: the hub drives the chip's 3-wire SPI
+# on a hardware SPI host itself (interface: any). This also proves hoymiles_dtu_base and
+# hoymiles_dtu_cmt build without hoymiles_dtu_rf24 or the spi component.
+hoymiles_dtu_cmt:
+  id: dtu
+  sclk_pin: ${sclk_pin}
+  sdio_pin: ${sdio_pin}
+  csb_pin: ${csb_pin}
+  fcsb_pin: ${fcsb_pin}
+  gpio3_pin: ${gpio3_pin}
+  region: eu
+  frequency: 865MHz
+  tx_power: 13
+  update_interval: 15s
+  inverters:
+    - id: hms2
+      serial: "114400000000"
+      model: hms_800
+
+sensor:
+  - platform: hoymiles_dtu_base
+    inverter_id: hms2
+    ac_power: {name: "HMS AC Power"}
+    ac_voltage: {name: "HMS AC Voltage"}
+    ac_frequency: {name: "HMS AC Frequency"}
+    temperature: {name: "HMS Temperature"}
+    yield_today: {name: "HMS Yield Today"}
+    yield_total: {name: "HMS Yield Total"}
+    signal_strength: {name: "HMS Signal"}
+    channels:
+      - number: 1
+        dc_voltage: {name: "HMS CH1 DC Voltage"}
+        dc_power: {name: "HMS CH1 DC Power"}
+      - number: 2
+        dc_voltage: {name: "HMS CH2 DC Voltage"}
+        dc_power: {name: "HMS CH2 DC Power"}
+
+text_sensor:
+  - platform: hoymiles_dtu_base
+    inverter_id: hms2
+    status: {name: "HMS Status"}
+    last_seen: {name: "HMS Last Seen"}
+  - platform: hoymiles_dtu_base
+    dtu_id: dtu
+    last_radio_error: {name: "HMS Radio Error"}
+
+button:
+  - platform: template
+    name: "HMS Limit 50%"
+    on_press:
+      - hoymiles_dtu_base.radio_set_power_limit:
+          id: dtu
+          percent: 50
+          persistent: false

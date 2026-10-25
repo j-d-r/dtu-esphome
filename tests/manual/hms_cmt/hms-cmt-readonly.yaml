@@ -1,0 +1,97 @@
+# HMS (CMT2300A) read-only HIL fixture. See README.md in this directory - the CMT2300A path has
+# not been verified against real hardware yet, so this config is deliberately debug-heavy.
+substitutions:
+  plug_name: hms-cmt-readonly
+  device_name: ${plug_name}
+  # CMT2300A 3-wire SPI + the two chip selects. These are the defaults Ahoy and OpenDTU use on
+  # their ESP32 HMS boards; change them to match your wiring.
+  sclk_pin: GPIO12
+  sdio_pin: GPIO14
+  csb_pin: GPIO27
+  fcsb_pin: GPIO26
+  gpio3_pin: GPIO34
+
+packages:
+  device_base: !include ../nrf24_probe/packages/device_base_debug.yaml
+  default_diag: !include ../nrf24_probe/packages/default_diag.yaml
+
+esphome:
+  name: ${plug_name}
+  friendly_name: Hoymiles DTU HMS Read-Only
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+logger:
+  # DEBUG on purpose: it prints every TX (with the frequency), every received frame with its RSSI,
+  # and each accepted fragment. That is what you need to tell "radio silent" from "radio heard
+  # something we misparsed". Drop to INFO once the link is proven.
+  level: DEBUG
+
+# Real time so realtime requests (0x0B) carry a valid epoch instead of a millis stub.
+time:
+  - platform: sntp
+    id: dtu_time
+
+external_components:
+  - source:
+      type: local
+      path: ../../../components
+    components: [hoymiles_dtu_base, hoymiles_dtu_cmt]
+
+# No `spi:` bus: the CMT2300A's 3-wire interface is bit-banged on the GPIOs above.
+hoymiles_dtu_cmt:
+  id: dtu
+  sclk_pin: ${sclk_pin}
+  sdio_pin: ${sdio_pin}
+  csb_pin: ${csb_pin}
+  fcsb_pin: ${fcsb_pin}
+  gpio3_pin: ${gpio3_pin}
+  # eu = 860 MHz band; work frequency 865 MHz, inverter boot frequency 868 MHz.
+  region: eu
+  frequency: 865MHz
+  tx_power: 13
+  update_interval: 15s
+  inverters:
+    - id: hms
+      # Printed inverter serial (packed BCD under the hood). 1144... = HMS-600/700/800/900/1000.
+      serial: "114400000000"
+      model: hms_800
+
+sensor:
+  - platform: hoymiles_dtu_base
+    inverter_id: hms
+    ac_power: {name: "HMS AC Power"}
+    ac_voltage: {name: "HMS AC Voltage"}
+    ac_current: {name: "HMS AC Current"}
+    ac_frequency: {name: "HMS AC Frequency"}
+    reactive_power: {name: "HMS Reactive Power"}
+    power_factor: {name: "HMS Power Factor"}
+    temperature: {name: "HMS Temperature"}
+    yield_today: {name: "HMS Yield Today"}
+    yield_total: {name: "HMS Yield Total"}
+    # CMT2300A-only: RSSI of the last accepted reply. The quickest signal-quality read-out.
+    signal_strength: {name: "HMS Signal Strength"}
+    channels:
+      - number: 1
+        dc_voltage: {name: "HMS CH1 DC Voltage"}
+        dc_current: {name: "HMS CH1 DC Current"}
+        dc_power: {name: "HMS CH1 DC Power"}
+        yield_today: {name: "HMS CH1 Yield Today"}
+      - number: 2
+        dc_voltage: {name: "HMS CH2 DC Voltage"}
+        dc_current: {name: "HMS CH2 DC Current"}
+        dc_power: {name: "HMS CH2 DC Power"}
+        yield_today: {name: "HMS CH2 Yield Today"}
+
+text_sensor:
+  - platform: hoymiles_dtu_base
+    inverter_id: hms
+    status: {name: "HMS Status"}
+    last_seen: {name: "HMS Last Seen"}
+  - platform: hoymiles_dtu_base
+    dtu_id: dtu
+    last_rx_payload: {name: "DTU Last RX Payload"}
+    last_radio_error: {name: "DTU Last Radio Error"}

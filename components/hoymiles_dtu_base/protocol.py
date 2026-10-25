@@ -3,7 +3,7 @@ from __future__ import annotations
 
 def parse_serial_bcd(value: str | int) -> int:
     text = str(value).strip()
-    if not text.isdigit():
+    if not all(_ in '0123456789abcdefABCDEF' for _ in text):
         raise ValueError("BCD serial must contain decimal digits only")
     if len(text) != 12:
         raise ValueError("BCD serial must be exactly 12 decimal digits")

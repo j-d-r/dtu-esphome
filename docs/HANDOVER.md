@@ -21,11 +21,11 @@ Key code:
   / `read_monitor_packets_`
 - Tunable (top of `dtu_rf24.cpp`): `MONITOR_CHANNEL_DWELL_MS` (20 ms).
 
-> Note, 2026-10-25: when the nRF24 hub moved to its own component,
-> `report_scan_()` and `SCAN_REPORT_THROTTLE_MS` (2000 ms) moved into the
-> radio-independent `hoymiles_dtu_base/dtu_base.{h,cpp}`. The nRF24 monitor
-> itself is unchanged and lives in `dtu_rf24.cpp`; `report_scan_()` now takes
-> the channel it was heard on as an argument.
+> Note, 2026-09-30: when HMS/CMT2300A support was added, `report_scan_()` and
+> `SCAN_REPORT_THROTTLE_MS` (2000 ms) moved into the radio-independent
+> `dtu_base.{h,cpp}`, since the CMT hub reports scans the same way. The nRF24
+> monitor itself is unchanged and still lives in `dtu_rf24.cpp`;
+> `report_scan_()` now takes the channel it was heard on as an argument.
 
 Verified so far: native classifier tests (incl. the report's real `0x02`/`0x06`
 captures), `esphome config` on all test YAMLs, and a full ESP32 firmware compile

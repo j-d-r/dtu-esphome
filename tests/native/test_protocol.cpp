@@ -109,7 +109,7 @@ static void test_realtime_request_byte_order() {
 static void test_power_limit_request() {
   const uint64_t radio_id = hm_radio_id_from_serial(0x116182806989ULL);
   uint8_t pkt[32];
-  const uint8_t len = hm_build_power_limit_request(radio_id, 0x83915460UL, 100, true, pkt, sizeof(pkt));
+  const uint8_t len = hm_build_power_limit_request(radio_id, 0x83915460UL, 100, true, false, pkt, sizeof(pkt));
   CHECK(len == 19);
   CHECK(pkt[0] == 0x51);
   const uint8_t inv[4] = {0x82, 0x80, 0x69, 0x89};  // = inverter address[1..4], LSB-first of radio_id>>8
@@ -121,9 +121,221 @@ static void test_power_limit_request() {
   CHECK(pkt[16] == ((crc16 >> 8) & 0xFF) && pkt[17] == (crc16 & 0xFF));
   CHECK(pkt[18] == hm_crc8(pkt, 18));
   // Non-persistent uses control 0x0001, and percent is rejected above 100.
-  CHECK(hm_build_power_limit_request(radio_id, 0x83915460UL, 50, false, pkt, sizeof(pkt)) == 19);
+  CHECK(hm_build_power_limit_request(radio_id, 0x83915460UL, 50, false, false, pkt, sizeof(pkt)) == 19);
   CHECK(pkt[15] == 0x01 && pkt[14] == 0x00);
-  CHECK(hm_build_power_limit_request(radio_id, 0x83915460UL, 101, true, pkt, sizeof(pkt)) == 0);
+  CHECK(hm_build_power_limit_request(radio_id, 0x83915460UL, 101, true, false, pkt, sizeof(pkt)) == 0);
+
+  // HMS inverters encode RelativPersistent as 0x0003 instead of the HM 0x0101, and share the
+  // 0x0001 non-persistent word (OpenDTU ActivePowerControlCommand).
+  CHECK(hm_build_power_limit_request(radio_id, 0x83915460UL, 70, true, true, pkt, sizeof(pkt)) == 19);
+  CHECK(pkt[12] == 0x02 && pkt[13] == 0xBC);  // 70% -> 700 (0x02BC)
+  CHECK(pkt[14] == 0x00 && pkt[15] == 0x03);
+  CHECK(pkt[18] == hm_crc8(pkt, 18));
+  CHECK(hm_build_power_limit_request(radio_id, 0x83915460UL, 70, false, true, pkt, sizeof(pkt)) == 19);
+  CHECK(pkt[14] == 0x00 && pkt[15] == 0x01);
+}
+
+static void test_channel_change_request() {
+  const uint64_t radio_id = hm_radio_id_from_serial(0x114482806989ULL);
+  uint8_t pkt[32];
+  // EU: 865.00 MHz is channel 20 above the 860 MHz base.
+  const uint8_t len = hm_build_channel_change_request(radio_id, 0x83915460UL, HM_REGION_EU, 20, pkt, sizeof(pkt));
+  CHECK(len == 15);
+  CHECK(pkt[0] == 0x56);
+  const uint8_t inv[4] = {0x82, 0x80, 0x69, 0x89};
+  CHECK(memcmp(&pkt[1], inv, 4) == 0);
+  const uint8_t dtu[4] = {0x83, 0x91, 0x54, 0x60};
+  CHECK(memcmp(&pkt[5], dtu, 4) == 0);
+  CHECK(pkt[9] == 0x02 && pkt[10] == 0x15 && pkt[11] == 0x21);  // 860 MHz band magic
+  CHECK(pkt[12] == 20 && pkt[13] == 0x14);
+  // Only a CRC8 over the whole packet - no CRC16 over the control data.
+  CHECK(pkt[14] == hm_crc8(pkt, 14));
+  // The 900 MHz bands carry different band bytes.
+  CHECK(hm_build_channel_change_request(radio_id, 0x83915460UL, HM_REGION_US, 72, pkt, sizeof(pkt)) == 15);
+  CHECK(pkt[9] == 0x03 && pkt[10] == 0x17 && pkt[11] == 0x3C && pkt[12] == 72);
+  CHECK(hm_build_channel_change_request(radio_id, 0x83915460UL, HM_REGION_BRAZIL, 72, pkt, sizeof(pkt)) == 15);
+  CHECK(pkt[9] == 0x03);
+  // Too small a buffer is rejected rather than truncated.
+  CHECK(hm_build_channel_change_request(radio_id, 0x83915460UL, HM_REGION_EU, 20, pkt, 14) == 0);
+}
+
+// The CMT2300A has no hardware address filter, so replies are matched on the DTU serial the
+// inverter echoes back in [5..8].
+static void test_packet_addressed_to_dtu() {
+  uint8_t pkt[16];
+  memset(pkt, 0, sizeof(pkt));
+  pkt[0] = 0x95;
+  pkt[5] = 0x83;
+  pkt[6] = 0x91;
+  pkt[7] = 0x54;
+  pkt[8] = 0x60;
+  CHECK(hm_packet_addressed_to_dtu(pkt, sizeof(pkt), 0x83915460UL));
+  CHECK(!hm_packet_addressed_to_dtu(pkt, sizeof(pkt), 0x83915461UL));
+  CHECK(!hm_packet_addressed_to_dtu(pkt, 8, 0x83915460UL));  // too short to hold the field
+  CHECK(!hm_packet_addressed_to_dtu(nullptr, sizeof(pkt), 0x83915460UL));
+}
+
+// HMS records are laid out differently from HM records with the same channel count: the DC
+// channels interleave, and the 4-channel model reports a voltage per input instead of per MPPT
+// pair. Offsets per Ahoy hms{1,2,4}chAssignment / OpenDTU HMS_{1CH,2CH,4CH}.
+static void test_decode_hms_1ch() {
+  uint8_t p[32];
+  memset(p, 0, sizeof(p));
+  put16(p, 2, 3500);    // udc 350.0
+  put16(p, 4, 400);     // idc 4.00
+  put16(p, 6, 1400);    // pdc 140.0
+  put32(p, 8, 250000);  // yt 250.000
+  put16(p, 12, 900);    // yd 900
+  put16(p, 14, 2295);   // uac 229.5
+  put16(p, 16, 4998);   // f 49.98
+  put16(p, 18, 1380);   // pac 138.0
+  put16(p, 22, 60);     // iac 0.60
+  put16(p, 26, 310);    // temp 31.0
+  put16(p, 28, 1);      // evt
+  HmTelemetry t;
+  // An HMS 1-channel record is byte-for-byte an HM 1-channel record.
+  CHECK(hm_model_channel_count(HMS_500) == 1);
+  CHECK(hm_model_is_hms(HMS_500));
+  CHECK(!hm_model_is_hms(HM_400));
+  CHECK(hm_parse_realtime_payload(HMS_500, p, 30, &t));
+  CHECK_NEAR(t.channels[0].dc_voltage, 350.0f);
+  CHECK_NEAR(t.channels[0].dc_power, 140.0f);
+  CHECK_NEAR(t.ac_voltage, 229.5f);
+  CHECK_NEAR(t.ac_power, 138.0f);
+  CHECK_NEAR(t.temperature, 31.0f);
+  CHECK_NEAR(t.yield_today, 900.0f);
+  CHECK_NEAR(t.yield_total, 250.0f);
+  CHECK(t.event_code == 1);
+}
+
+static void test_decode_hms_1ch_v2() {
+  uint8_t p[44];
+  memset(p, 0, sizeof(p));
+  put16(p, 2, 3600);     // udc 360.0
+  put16(p, 6, 410);      // idc 4.10
+  put16(p, 10, 1470);    // pdc 147.0
+  put32(p, 14, 260000);  // yt 260.000
+  put16(p, 22, 950);     // yd 950
+  put16(p, 18, 7);       // evt (in the slot a 2-channel record uses for channel 2's yield total)
+  put16(p, 20, 40);      // q 4.0
+  put16(p, 26, 2301);    // uac 230.1
+  put16(p, 28, 5002);    // f 50.02
+  put16(p, 30, 1450);    // pac 145.0
+  put16(p, 34, 63);      // iac 0.63
+  put16(p, 36, 995);     // pf 0.995
+  put16(p, 38, 322);     // temp 32.2
+  HmTelemetry t;
+  CHECK(hm_model_channel_count(HMS_500_V2) == 1);
+  CHECK(hm_parse_realtime_payload(HMS_500_V2, p, 40, &t));
+  CHECK_NEAR(t.channels[0].dc_voltage, 360.0f);
+  CHECK_NEAR(t.channels[0].dc_current, 4.1f);
+  CHECK_NEAR(t.channels[0].dc_power, 147.0f);
+  CHECK_NEAR(t.ac_voltage, 230.1f);
+  CHECK_NEAR(t.ac_power, 145.0f);
+  CHECK_NEAR(t.reactive_power, 4.0f);
+  CHECK_NEAR(t.power_factor, 0.995f);
+  CHECK_NEAR(t.temperature, 32.2f);
+  CHECK(t.event_code == 7);
+  // A record one field shorter than the layout needs must be rejected, not decoded past the end.
+  CHECK(!hm_parse_realtime_payload(HMS_500_V2, p, 39, &t));
+}
+
+static void test_decode_hms_2ch() {
+  uint8_t p[44];
+  memset(p, 0, sizeof(p));
+  put16(p, 2, 3400);     // ch1 udc 340.0
+  put16(p, 6, 480);      // ch1 idc 4.80
+  put16(p, 10, 1630);    // ch1 pdc 163.0
+  put32(p, 14, 300000);  // ch1 yt 300.000
+  put16(p, 22, 700);     // ch1 yd 700
+  put16(p, 4, 3450);     // ch2 udc 345.0
+  put16(p, 8, 500);      // ch2 idc 5.00
+  put16(p, 12, 1720);    // ch2 pdc 172.0
+  put32(p, 18, 310000);  // ch2 yt 310.000
+  put16(p, 24, 750);     // ch2 yd 750
+  put16(p, 26, 2310);    // uac 231.0
+  put16(p, 28, 5000);    // f 50.00
+  put16(p, 30, 3300);    // pac 330.0
+  put16(p, 32, 70);      // q 7.0
+  put16(p, 34, 143);     // iac 1.43
+  put16(p, 36, 990);     // pf 0.990
+  put16(p, 38, 335);     // temp 33.5
+  put16(p, 40, 2);       // evt
+  HmTelemetry t;
+  CHECK(hm_model_channel_count(HMS_800) == 2);
+  CHECK(hm_parse_realtime_payload(HMS_800, p, 42, &t));
+  CHECK_NEAR(t.channels[0].dc_voltage, 340.0f);
+  CHECK_NEAR(t.channels[0].dc_current, 4.8f);
+  CHECK_NEAR(t.channels[0].dc_power, 163.0f);
+  CHECK_NEAR(t.channels[0].yield_total, 300.0f);
+  CHECK_NEAR(t.channels[1].dc_voltage, 345.0f);
+  CHECK_NEAR(t.channels[1].dc_current, 5.0f);
+  CHECK_NEAR(t.channels[1].dc_power, 172.0f);
+  CHECK_NEAR(t.channels[1].yield_today, 750.0f);
+  CHECK_NEAR(t.ac_voltage, 231.0f);
+  CHECK_NEAR(t.ac_power, 330.0f);
+  CHECK_NEAR(t.reactive_power, 7.0f);
+  CHECK_NEAR(t.ac_current, 1.43f);
+  CHECK_NEAR(t.power_factor, 0.99f);
+  CHECK_NEAR(t.temperature, 33.5f);
+  CHECK(t.event_code == 2);
+  CHECK_NEAR(t.yield_today, 1450.0f);
+  CHECK_NEAR(t.yield_total, 610.0f);
+  // The same bytes decoded as an HM 2-channel record must NOT match: the families differ.
+  HmTelemetry hm;
+  CHECK(hm_parse_realtime_payload(HM_800, p, 42, &hm));
+  CHECK(!near(hm.channels[0].dc_current, t.channels[0].dc_current));
+}
+
+static void test_decode_hms_4ch() {
+  uint8_t p[68];
+  memset(p, 0, sizeof(p));
+  put16(p, 2, 3300);     // ch1 udc 330.0
+  put16(p, 6, 300);      // ch1 idc 3.00
+  put16(p, 10, 990);     // ch1 pdc 99.0
+  put32(p, 14, 100000);  // ch1 yt 100.000
+  put16(p, 22, 400);     // ch1 yd 400
+  put16(p, 4, 3320);     // ch2 udc 332.0
+  put16(p, 8, 310);      // ch2 idc 3.10
+  put16(p, 12, 1020);    // ch2 pdc 102.0
+  put32(p, 18, 110000);  // ch2 yt 110.000
+  put16(p, 24, 420);     // ch2 yd 420
+  put16(p, 26, 3280);    // ch3 udc 328.0
+  put16(p, 30, 320);     // ch3 idc 3.20
+  put16(p, 34, 1050);    // ch3 pdc 105.0
+  put32(p, 38, 120000);  // ch3 yt 120.000
+  put16(p, 46, 430);     // ch3 yd 430
+  put16(p, 28, 3260);    // ch4 udc 326.0 (its own voltage, unlike the HM 4-channel layout)
+  put16(p, 32, 330);     // ch4 idc 3.30
+  put16(p, 36, 1080);    // ch4 pdc 108.0
+  put32(p, 42, 130000);  // ch4 yt 130.000
+  put16(p, 48, 440);     // ch4 yd 440
+  put16(p, 50, 2320);    // uac 232.0
+  put16(p, 52, 4999);    // f 49.99
+  put16(p, 54, 4100);    // pac 410.0
+  put16(p, 56, 90);      // q 9.0
+  put16(p, 58, 177);     // iac 1.77
+  put16(p, 60, 985);     // pf 0.985
+  put16(p, 62, 341);     // temp 34.1
+  put16(p, 64, 3);       // evt
+  HmTelemetry t;
+  CHECK(hm_model_channel_count(HMS_2000) == 4);
+  CHECK(hm_parse_realtime_payload(HMS_2000, p, 66, &t));
+  CHECK_NEAR(t.channels[0].dc_voltage, 330.0f);
+  CHECK_NEAR(t.channels[1].dc_voltage, 332.0f);
+  CHECK_NEAR(t.channels[2].dc_voltage, 328.0f);
+  CHECK_NEAR(t.channels[3].dc_voltage, 326.0f);
+  CHECK_NEAR(t.channels[2].dc_power, 105.0f);
+  CHECK_NEAR(t.channels[3].dc_current, 3.3f);
+  CHECK_NEAR(t.channels[3].yield_total, 130.0f);
+  CHECK_NEAR(t.ac_voltage, 232.0f);
+  CHECK_NEAR(t.ac_frequency, 49.99f);
+  CHECK_NEAR(t.ac_power, 410.0f);
+  CHECK_NEAR(t.temperature, 34.1f);
+  CHECK(t.event_code == 3);
+  CHECK_NEAR(t.yield_today, 1690.0f);
+  CHECK_NEAR(t.yield_total, 460.0f);
+  CHECK(!hm_parse_realtime_payload(HMS_2000, p, 65, &t));
 }
 
 static void test_frame_parse_and_assembly() {
@@ -354,7 +566,7 @@ static void test_classify_sniffed() {
 
   // A foreign DevControl aimed at OUR inverter -> flagged as the most serious case.
   uint8_t ctrl[32];
-  uint8_t clen = hm_build_power_limit_request(our_inv, 0x11223344UL, 0, true, ctrl, sizeof(ctrl));
+  uint8_t clen = hm_build_power_limit_request(our_inv, 0x11223344UL, 0, true, false, ctrl, sizeof(ctrl));
   CHECK(clen == 19);
   CHECK(hm_classify_sniffed_packet(ctrl, clen, our_inv, our_dtu, &r));
   CHECK(r.kind == HM_SNIFF_FOREIGN_CONTROL && r.targets_our_inverter && r.sender_dtu_serial == 0x11223344UL);
@@ -368,12 +580,12 @@ static void test_classify_sniffed() {
   CHECK(r.kind == HM_SNIFF_FOREIGN_POLL && r.targets_our_inverter && r.severity == HM_SEVERITY_HIGH);
 
   // Our own DevControl (sender == our DTU serial) is not an intrusion.
-  clen = hm_build_power_limit_request(our_inv, our_dtu, 50, true, ctrl, sizeof(ctrl));
+  clen = hm_build_power_limit_request(our_inv, our_dtu, 50, true, false, ctrl, sizeof(ctrl));
   CHECK(!hm_classify_sniffed_packet(ctrl, clen, our_inv, our_dtu, &r));
 
   // A control command to a DIFFERENT inverter is not our concern.
   const uint64_t other_inv = hm_radio_id_from_serial(0x114180000000ULL);
-  clen = hm_build_power_limit_request(other_inv, 0x11223344UL, 0, true, ctrl, sizeof(ctrl));
+  clen = hm_build_power_limit_request(other_inv, 0x11223344UL, 0, true, false, ctrl, sizeof(ctrl));
   CHECK(!hm_classify_sniffed_packet(ctrl, clen, our_inv, our_dtu, &r));
 
   // Corrupted CRC8, an inverter response (bit7 set), and a runt packet are all rejected.
@@ -488,11 +700,17 @@ int main() {
   test_radio_id_and_address();
   test_realtime_request_byte_order();
   test_power_limit_request();
+  test_channel_change_request();
+  test_packet_addressed_to_dtu();
   test_frame_parse_and_assembly();
   test_decode_1ch();
   test_decode_2ch();
   test_decode_4ch();
   test_decode_4ch_golden_capture();
+  test_decode_hms_1ch();
+  test_decode_hms_1ch_v2();
+  test_decode_hms_2ch();
+  test_decode_hms_4ch();
   test_classify_sniffed();
   test_scan_requests();
   test_scan_responses();

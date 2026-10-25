@@ -14,6 +14,9 @@ CONFIGS = [
     "test.scan-detect.yaml",
     "test.scan.yaml",
     "test.scan-on-boot.yaml",
+    "test.hms-cmt.yaml",
+    "test.hms-cmt-software.yaml",
+    "test.hms-cmt-shared-spi.yaml",
 ]
 
 
