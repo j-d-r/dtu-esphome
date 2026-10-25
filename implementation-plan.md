@@ -1,9 +1,10 @@
-# ESPHome Hoymiles DTU - HM-Only Implementation Plan
+# ESPHome Hoymiles DTU - Implementation Plan
 
-This project targets Hoymiles **HM-series microinverters only** using an
-nRF24L01+ radio. HMS/HMT and CMT2300A support are intentionally out of scope.
+This project targets Hoymiles **HM-series** microinverters over an nRF24L01+
+radio and **HMS-series** microinverters over a CMT2300A radio. HMT (3-phase)
+remains out of scope.
 
-The communication reference is Ahoy's HM/nRF24 implementation. Keep this repo
+The communication references are Ahoy and OpenDTU. Keep this repo
 ESPHome-native: use ESPHome SPI, component lifecycle, logging, sensors, and
 config schemas rather than porting upstream application structure.
 
@@ -11,7 +12,7 @@ config schemas rather than porting upstream application structure.
 
 Implemented as of 2026-07-01:
 
-- `hoymiles_dtu_rf24` hub with ESPHome SPI, `cs_pin`, `ce_pin`, optional `irq_pin`,
+- `hoymiles_dtu` hub with ESPHome SPI, `cs_pin`, `ce_pin`, optional `irq_pin`,
   `update_interval`, `pa_level`, and one or more inverter definitions.
 - nRF24 probe/init using 1 MHz SPI mode 0, 250 kbps RF, CRC16, dynamic payloads,
   5-byte addresses, and the HM channel set.
@@ -31,33 +32,58 @@ Implemented as of 2026-07-01:
   fixture.
 - Manual HIL config/checklist in `tests/manual/hm4_readonly/`.
 
+Added 2026-09-30 (code complete, HIL pending - see Phase 2b):
+
+- `radio:` selector on the hub: `nrf24` (HM) or `cmt2300a` (HMS). The
+  radio-independent half of the hub is `HoymilesDtuBase` (`dtu_base.{h,cpp}`).
+- CMT2300A driver (`cmt2300a.{h,cpp}`) over 3-wire SPI, with the
+  per-band register banks, dBm TX power, RSSI, and a register self-test.
+- CMT state machine (`dtu_cmt.{h,cpp}`): single-frequency exchange, software
+  DTU-id filtering, retransmits, and channel-change binding for an inverter on
+  its boot frequency.
+- HMS model families and record layouts, the HMS power-limit control word, the
+  channel-change request builder, and per-inverter `signal_strength` (RSSI).
+- HMS compile fixtures (`test.hms-cmt{,-idf}.yaml`) and a manual HIL checklist
+  in `tests/manual/hms_cmt/`.
+
 Changed 2026-10-25:
 
-- The nRF24 hub moved into its own ESPHome component, `hoymiles_dtu_rf24`
-  (`HoymilesDtuRf24` in `dtu_rf24.{h,cpp}`). Everything radio-independent stays
-  in `hoymiles_dtu_base`: the protocol, `HoymilesDtuBase` in
-  `dtu_base.{h,cpp}` (polling, request building, fragment collection, decoding,
-  publishing, the power-limit queue), the sensor/text_sensor platforms, and
-  `radio_set_power_limit`. ESPHome only compiles sources that sit directly in a
-  component's folder, so the components are siblings, not subfolders.
-- YAML: the hub block is now `hoymiles_dtu_rf24:`, and the scan action is
-  `hoymiles_dtu_rf24.scan_inverters`. Entity platforms stay
-  `platform: hoymiles_dtu_base`. This is a breaking YAML change.
+- The single `hoymiles_dtu` component was split into three ESPHome components.
+  ESPHome only compiles sources that sit directly in a component's folder, so
+  they are siblings, not subfolders:
+  - `hoymiles_dtu_base`: protocol, `HoymilesDtuBase`, sensor/text_sensor
+    platforms, `radio_set_power_limit`.
+  - `hoymiles_dtu_rf24`: the nRF24 hub.
+  - `hoymiles_dtu_cmt`: the CMT2300A driver and hub.
+
+  The `radio:` selector is gone. The YAML block names the radio instead
+  (`hoymiles_dtu_rf24:` / `hoymiles_dtu_cmt:`). Entity platforms are
+  `platform: hoymiles_dtu_base`, and the actions are
+  `hoymiles_dtu_base.radio_set_power_limit` and
+  `hoymiles_dtu_rf24.scan_inverters`. This is a breaking YAML change.
+- The hub classes were renamed to match: `HoymilesDtuComponent` is now
+  `HoymilesDtuRf24`, and `HoymilesDtuCmtComponent` is now `HoymilesDtuCmt`.
+- The hub files were renamed the same way: `hoymiles_dtu.{h,cpp}` is now
+  `hoymiles_dtu_rf24/dtu_rf24.{h,cpp}`, and `cmt_hub.{h,cpp}` is now
+  `hoymiles_dtu_cmt/dtu_cmt.{h,cpp}`.
 
 ## Scope
 
 In scope:
 
-- HM-300, HM-350, HM-400, HM-600, HM-700, HM-800, HM-1000, HM-1200, HM-1500.
-- nRF24L01+ radio only.
+- HM-300, HM-350, HM-400, HM-600, HM-700, HM-800, HM-1000, HM-1200, HM-1500
+  over nRF24L01+.
+- HMS-300/350/400/450/500, HMS-450/500 v2, HMS-600/700/800/900/1000,
+  HMS-1600/1800/2000 over CMT2300A.
 - Read-only telemetry first.
 - Later: power limit, inverter enable/disable, restart, and multi-inverter
-  scheduling, if HM protocol testing confirms reliable command handling.
+  scheduling, if protocol testing confirms reliable command handling.
 
 Out of scope:
 
-- HMS/HMT inverters.
-- CMT2300A radios.
+- HMT (3-phase) inverters: they report six DC channels and three-phase AC
+  voltages/currents, which neither `HmTelemetry` nor the sensor platform models.
+  Adding them means extending both, not just a layout table.
 - Zero-export control loops beyond exposing safe ESPHome entities/actions.
 - Vendoring incompatible upstream source into this GPL-only repo without a
   separate licensing decision.
@@ -106,6 +132,53 @@ Acceptance:
 
 - Adding a model is mostly metadata and tests.
 - Unit tests cover real captured payloads for each supported layout.
+
+## Phase 2b - HMS / CMT2300A Support
+
+Goal: poll HMS inverters over a CMT2300A radio with the same protocol core.
+
+Status (2026-09-30): implemented in code, **not yet hardware-verified**.
+
+- The hub component selects the implementation: `hoymiles_dtu_rf24`
+  (`HoymilesDtuRf24`) or `hoymiles_dtu_cmt` (`HoymilesDtuCmt`).
+  Everything radio-independent is `HoymilesDtuBase` in
+  `hoymiles_dtu_base/dtu_base.{h,cpp}`, so request building, fragment
+  collection, decoding, publishing and the power-limit queue have one
+  implementation.
+- `cmt2300a.{h,cpp}` is the chip driver: 3-wire SPI on a free ESP32 hardware
+  SPI host (ESP-IDF half-duplex 3-wire mode) with a bit-bang fallback, the
+  RFPDK register banks per band, the state machine, FIFO access, RSSI and the
+  dBm TX-power table.
+- `dtu_cmt.{h,cpp}` is the CMT state machine: single-frequency TX/RX with no
+  link-layer ACK, software DTU-id filtering, time-based retransmits, and the
+  channel-change (`0x56`) binding step for an inverter that is still on its boot
+  frequency.
+- HMS record layouts and the HMS power-limit control word are in
+  `protocol.{h,cpp}` and unit-tested in `tests/native/test_protocol.cpp`.
+- The nRF24 hub is its own component (`hoymiles_dtu_rf24`, which depends on
+  `spi`), so a CMT-only configuration compiles none of it and needs no `spi:`
+  bus. `tests/components/hoymiles_dtu/test.hms-cmt{,-idf}.yaml` compile that
+  shape in CI.
+
+Remaining tasks:
+
+1. Work through `tests/manual/hms_cmt/README.md` against a real HMS inverter.
+   The 3-wire SPI transport (step 1, both hardware and bit-banged) and the frequency binding (step 3) are the
+   two parts with no upstream equivalent to fall back on.
+2. Resolve the HMS-450/500 v2 layout disagreement between OpenDTU and Ahoy
+   (reactive power and event-code offsets) from a real record.
+3. Confirm the HMS persistent power-limit control word (`0x0003`) on hardware.
+4. Decide whether passive scan detection on a single CMT frequency is worth
+   keeping once its usefulness can be measured on air.
+5. Consider per-inverter frequencies if a multi-HMS setup needs them (today the
+   working frequency is hub-wide, as in OpenDTU).
+
+Acceptance:
+
+- An HMS inverter publishes live telemetry that matches its own app within ~2%.
+- A power-cycled inverter is recovered by the channel-change step without a
+  reboot of the ESP.
+- No regression in the HM/nRF24 path.
 
 ## Phase 3 - Robust Radio Scheduling
 
@@ -174,7 +247,10 @@ Acceptance:
 ## Reference Policy
 
 - Ahoy is the communication reference for HM/nRF24 behavior.
+- Ahoy and OpenDTU are both references for HMS/CMT2300A behavior; where they
+  disagree, record the disagreement and which one was followed.
 - Store findings in `components/hoymiles_dtu_base/REFERENCE_NOTES.md`.
-- Do not copy Ahoy source into this repo unless licensing is revisited.
+- Do not copy Ahoy or OpenDTU source into this repo unless licensing is
+  revisited.
 - When ESPHome APIs are uncertain, verify against current ESPHome docs/source
   before changing code.

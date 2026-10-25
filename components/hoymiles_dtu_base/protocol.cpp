@@ -119,7 +119,7 @@ uint8_t hm_build_realtime_request(uint64_t inverter_radio_id, uint32_t dtu_seria
 }
 
 uint8_t hm_build_power_limit_request(uint64_t inverter_radio_id, uint32_t dtu_serial, uint16_t percent, bool persistent,
-                                     uint8_t *buffer, size_t buffer_len) {
+                                     bool hms, uint8_t *buffer, size_t buffer_len) {
   if (buffer_len < 19 || percent > 100) {
     return 0;
   }
@@ -134,7 +134,9 @@ uint8_t hm_build_power_limit_request(uint64_t inverter_radio_id, uint32_t dtu_se
   const uint16_t limit = static_cast<uint16_t>(percent * 10);  // relative %, transmitted ×10
   buffer[12] = (limit >> 8) & 0xFF;
   buffer[13] = limit & 0xFF;
-  const uint16_t control = persistent ? 0x0101 : 0x0001;  // RelativPersistent / RelativNonPersistent
+  // RelativPersistent / RelativNonPersistent. The persistent word differs per family: HM uses
+  // 0x0101, HMS uses 0x0003 (OpenDTU ActivePowerControlCommand). Both use 0x0001 for non-persistent.
+  const uint16_t control = persistent ? (hms ? 0x0003 : 0x0101) : 0x0001;
   buffer[14] = (control >> 8) & 0xFF;
   buffer[15] = control & 0xFF;
   uint8_t len = 16;
@@ -144,6 +146,46 @@ uint8_t hm_build_power_limit_request(uint64_t inverter_radio_id, uint32_t dtu_se
   buffer[len] = hm_crc8(buffer, len);
   len++;
   return len;
+}
+
+uint8_t hm_build_channel_change_request(uint64_t inverter_radio_id, uint32_t dtu_serial, HmCmtRegion region,
+                                        uint8_t channel, uint8_t *buffer, size_t buffer_len) {
+  if (buffer_len < 15) {
+    return 0;
+  }
+  memset(buffer, 0, 15);
+  buffer[0] = HM_TX_CHANNEL_CHANGE;
+  // Same id byte order as the realtime request (see hm_build_realtime_request).
+  write_hm_u32_le(&buffer[1], static_cast<uint32_t>(inverter_radio_id >> 8));
+  write_hm_u32_be(&buffer[5], dtu_serial);
+  // [9..11] identify the band the channel index belongs to: 02 15 21 on the 860 MHz band,
+  // 03 17 3C on the 900 MHz band (OpenDTU ChannelChangeCommand::setCountryMode).
+  if (region == HM_REGION_EU) {
+    buffer[9] = 0x02;
+    buffer[10] = 0x15;
+    buffer[11] = 0x21;
+  } else {
+    buffer[9] = 0x03;
+    buffer[10] = 0x17;
+    buffer[11] = 0x3C;
+  }
+  buffer[12] = channel;
+  buffer[13] = 0x14;
+  // Discovery/channel commands carry only the app-layer CRC8, no CRC16 over the control data.
+  buffer[14] = hm_crc8(buffer, 14);
+  return 15;
+}
+
+bool hm_packet_addressed_to_dtu(const uint8_t *packet, uint8_t len, uint32_t dtu_serial) {
+  if (packet == nullptr || len < 9) {
+    return false;
+  }
+  for (uint8_t i = 0; i < 4; i++) {
+    if (packet[5 + i] != ((dtu_serial >> (8 * (3 - i))) & 0xFF)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool hm_parse_frame(const uint8_t *packet, uint8_t len, uint64_t inverter_radio_id, HmFrame *frame) {
@@ -246,11 +288,43 @@ constexpr HmModelLayout HM_4CH_LAYOUT = {
     60,
     {{2, 4, 8, 20, 12}, {SHARED_DC_VOLTAGE, 6, 10, 22, 16}, {24, 26, 30, 42, 34}, {SHARED_DC_VOLTAGE, 28, 32, 44, 38}}};
 
+// HMS record layouts. Offsets mirror Ahoy src/hms/hmsDefines.h hms{1,2,4}chAssignment and OpenDTU
+// HMS_{1CH,2CH,4CH}.cpp, which agree byte for byte. Note the HMS 1-channel record is laid out
+// exactly like the HM 1-channel one (so HMS_1CH_LAYOUT is HM_1CH_LAYOUT), while the HMS 2-/4-channel
+// records interleave the DC channels differently than their HM counterparts and, on 4 channels,
+// report a separate voltage per input instead of one per MPPT pair.
+constexpr HmModelLayout HMS_2CH_LAYOUT = {
+    2, 42, 26, 34, 30, 32, 28, 36, 38, 40, {{2, 6, 10, 22, 14}, {4, 8, 12, 24, 18}, {}, {}}};
+constexpr HmModelLayout HMS_4CH_LAYOUT = {
+    4,
+    66,
+    50,
+    58,
+    54,
+    56,
+    52,
+    60,
+    62,
+    64,
+    {{2, 6, 10, 22, 14}, {4, 8, 12, 24, 18}, {26, 30, 34, 46, 38}, {28, 32, 36, 48, 42}}};
+// HMS-450/500 "v2" (serial prefix 1125/1400): one DC input, but a record shaped like the 2-channel
+// one, with the second channel's yield slots carrying the event code and reactive power instead.
+// Source: OpenDTU HMS_1CHv2.cpp. Ahoy instead decodes this prefix with its full 2-channel assignment
+// (reactive power at 32, event code at 40); that disagreement is unresolved and untested here, so the
+// two extra fields may be wrong on these models even though the DC/AC power values are not.
+constexpr HmModelLayout HMS_1CH_V2_LAYOUT = {1, 40, 26, 34, 30, 20, 28, 36, 38, 18, {{2, 6, 10, 22, 14}, {}, {}, {}}};
+
 const HmModelLayout *hm_model_layout(HmModel model) {
   switch (model) {
     case HM_300:
     case HM_350:
     case HM_400:
+    // The HMS 1-channel record is identical to the HM 1-channel record.
+    case HMS_300:
+    case HMS_350:
+    case HMS_400:
+    case HMS_450:
+    case HMS_500:
       return &HM_1CH_LAYOUT;
     case HM_600:
     case HM_700:
@@ -260,11 +334,56 @@ const HmModelLayout *hm_model_layout(HmModel model) {
     case HM_1200:
     case HM_1500:
       return &HM_4CH_LAYOUT;
+    case HMS_450_V2:
+    case HMS_500_V2:
+      return &HMS_1CH_V2_LAYOUT;
+    case HMS_600:
+    case HMS_700:
+    case HMS_800:
+    case HMS_900:
+    case HMS_1000:
+      return &HMS_2CH_LAYOUT;
+    case HMS_1600:
+    case HMS_1800:
+    case HMS_2000:
+      return &HMS_4CH_LAYOUT;
   }
   return nullptr;
 }
 
 }  // namespace
+
+bool hm_model_is_hms(HmModel model) {
+  switch (model) {
+    case HMS_300:
+    case HMS_350:
+    case HMS_400:
+    case HMS_450:
+    case HMS_500:
+    case HMS_450_V2:
+    case HMS_500_V2:
+    case HMS_600:
+    case HMS_700:
+    case HMS_800:
+    case HMS_900:
+    case HMS_1000:
+    case HMS_1600:
+    case HMS_1800:
+    case HMS_2000:
+      return true;
+    case HM_300:
+    case HM_350:
+    case HM_400:
+    case HM_600:
+    case HM_700:
+    case HM_800:
+    case HM_1000:
+    case HM_1200:
+    case HM_1500:
+      break;
+  }
+  return false;
+}
 
 uint8_t hm_model_channel_count(HmModel model) {
   const HmModelLayout *layout = hm_model_layout(model);
@@ -325,6 +444,36 @@ const char *hm_model_to_string(HmModel model) {
       return "HM-1200";
     case HM_1500:
       return "HM-1500";
+    case HMS_300:
+      return "HMS-300";
+    case HMS_350:
+      return "HMS-350";
+    case HMS_400:
+      return "HMS-400";
+    case HMS_450:
+      return "HMS-450";
+    case HMS_500:
+      return "HMS-500";
+    case HMS_450_V2:
+      return "HMS-450 v2";
+    case HMS_500_V2:
+      return "HMS-500 v2";
+    case HMS_600:
+      return "HMS-600";
+    case HMS_700:
+      return "HMS-700";
+    case HMS_800:
+      return "HMS-800";
+    case HMS_900:
+      return "HMS-900";
+    case HMS_1000:
+      return "HMS-1000";
+    case HMS_1600:
+      return "HMS-1600";
+    case HMS_1800:
+      return "HMS-1800";
+    case HMS_2000:
+      return "HMS-2000";
   }
   return "unknown";
 }

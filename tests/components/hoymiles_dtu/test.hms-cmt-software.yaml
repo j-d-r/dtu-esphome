@@ -1,0 +1,10 @@
+substitutions:
+  board: esp32dev
+  framework: esp-idf
+
+packages:
+  hms: !include test.hms-cmt.yaml
+
+# Forced bit-banged transport: the fallback path has to keep compiling on its own.
+hoymiles_dtu_cmt:
+  interface: software

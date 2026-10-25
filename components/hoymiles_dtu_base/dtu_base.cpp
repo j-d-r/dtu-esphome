@@ -97,6 +97,12 @@ void HoymilesDtuInverter::publish_telemetry(const HmTelemetry &telemetry, uint32
   publish_status_();
 }
 
+void HoymilesDtuInverter::publish_signal_strength(int8_t rssi_dbm) {
+  if (signal_strength_sensor_ != nullptr) {
+    signal_strength_sensor_->publish_state(rssi_dbm);
+  }
+}
+
 void HoymilesDtuInverter::mark_offline_if_expired(uint32_t now, uint32_t timeout_ms) {
   if (status_ == OFFLINE || last_seen_ms_ == 0 || now - last_seen_ms_ < timeout_ms) {
     return;
@@ -158,8 +164,9 @@ bool HoymilesDtuBase::build_telemetry_request_(HoymilesDtuInverter *inverter, ui
 }
 
 bool HoymilesDtuBase::build_power_limit_request_(HoymilesDtuInverter *inverter) {
-  request_len_ = hm_build_power_limit_request(inverter->get_radio_id(), dtu_serial_, power_limit_percent_,
-                                              power_limit_persistent_, request_, sizeof(request_));
+  request_len_ =
+      hm_build_power_limit_request(inverter->get_radio_id(), dtu_serial_, power_limit_percent_, power_limit_persistent_,
+                                   hm_model_is_hms(inverter->get_model()), request_, sizeof(request_));
   return request_len_ != 0;
 }
 

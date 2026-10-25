@@ -40,6 +40,13 @@ jobs:
           - test.multi-model.yaml
           - test.scan-detect.yaml
           - test.scan-on-boot.yaml
+          # HMS inverters on a CMT2300A radio (no `spi:` bus in these configs, which also
+          # proves hoymiles_dtu_base and hoymiles_dtu_cmt build without hoymiles_dtu_rf24).
+          - test.hms-cmt.yaml
+          - test.hms-cmt-idf.yaml
+          # Bit-bang fallback forced, and a CMT2300A sharing the chip with a `spi:` bus.
+          - test.hms-cmt-software.yaml
+          - test.hms-cmt-shared-spi.yaml
     steps:
       - uses: actions/checkout@v4
       - run: esphome compile tests/components/hoymiles_dtu/${{ matrix.target }}

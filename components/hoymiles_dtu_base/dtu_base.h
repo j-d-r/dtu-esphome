@@ -36,6 +36,7 @@ class HoymilesDtuInverter {
   void set_yield_total_sensor(sensor::Sensor *sensor) { yield_total_sensor_ = sensor; }
   void set_status_text_sensor(text_sensor::TextSensor *sensor) { status_text_sensor_ = sensor; }
   void set_last_seen_text_sensor(text_sensor::TextSensor *sensor) { last_seen_text_sensor_ = sensor; }
+  void set_signal_strength_sensor(sensor::Sensor *sensor) { signal_strength_sensor_ = sensor; }
   void set_channel_dc_voltage_sensor(uint8_t channel, sensor::Sensor *sensor);
   void set_channel_dc_current_sensor(uint8_t channel, sensor::Sensor *sensor);
   void set_channel_dc_power_sensor(uint8_t channel, sensor::Sensor *sensor);
@@ -56,6 +57,9 @@ class HoymilesDtuInverter {
   void publish_telemetry(const HmTelemetry &telemetry, uint32_t now);
   void mark_offline_if_expired(uint32_t now, uint32_t timeout_ms);
   void set_last_error(const char *error) { last_error_ = error; }
+  // Received signal strength of the last accepted reply, in dBm. Only the CMT2300A reports it; the
+  // nRF24 has no per-packet RSSI, so its hub never calls this.
+  void publish_signal_strength(int8_t rssi_dbm);
 
  protected:
   void publish_status_();
@@ -77,6 +81,7 @@ class HoymilesDtuInverter {
   sensor::Sensor *temperature_sensor_{nullptr};
   sensor::Sensor *yield_today_sensor_{nullptr};
   sensor::Sensor *yield_total_sensor_{nullptr};
+  sensor::Sensor *signal_strength_sensor_{nullptr};
   text_sensor::TextSensor *status_text_sensor_{nullptr};
   text_sensor::TextSensor *last_seen_text_sensor_{nullptr};
   std::array<HmChannelSensors, HM_MAX_CHANNELS> channels_{};
@@ -84,8 +89,8 @@ class HoymilesDtuInverter {
 
 // Radio-independent half of the DTU hub: the inverter list, the poll scheduler, the request
 // builders, fragment collection/decoding, the queued power-limit command, and every published
-// entity. The radio-specific half derives from it and drives its own TX/RX state machine:
-// HoymilesDtuRf24 (nRF24, HM models).
+// entity. The radio-specific halves derive from it and drive their own TX/RX state machine:
+// HoymilesDtuRf24 (nRF24, HM models) and HoymilesDtuCmt (CMT2300A, HMS models).
 class HoymilesDtuBase : public PollingComponent {
  public:
   void set_scan_detection(bool enabled) { scan_detection_ = enabled; }
@@ -126,7 +131,8 @@ class HoymilesDtuBase : public PollingComponent {
   // Returns true only once a complete, decodable record has been published.
   bool process_response_(uint32_t now);
   void publish_radio_error_(const char *error);
-  // Report a passively-overheard foreign request. `channel` is the radio channel it was heard on.
+  // Report a passively-overheard foreign request. `channel` is the radio channel it was heard on
+  // (an nRF24 RF channel, or a CMT2300A frequency channel index).
   void report_scan_(const HmSniffResult &sniff, uint8_t channel, uint32_t now);
   void expire_offline_inverters_(uint32_t now);
   // Queue a poll of every inverter; called once per update interval.
