@@ -98,10 +98,6 @@ void HoymilesDtuInverter::set_channel_yield_today_sensor(uint8_t channel, sensor
   }
 }
 
-bool HoymilesDtuInverter::due(uint32_t now, uint32_t update_interval) const {
-  return last_poll_ms_ == 0 || now - last_poll_ms_ >= update_interval;
-}
-
 void HoymilesDtuInverter::publish_telemetry(const HmTelemetry &telemetry, uint32_t now) {
   telemetry_ = telemetry;
   last_seen_ms_ = now;
@@ -220,16 +216,27 @@ void HoymilesDtuComponent::setup() {
 }
 
 void HoymilesDtuComponent::update() {
-  if (!radio_ok_ || request_state_ != RequestState::IDLE) {
+  if (!radio_ok_) {
     return;
   }
-  const uint32_t now = millis();
+  // Only one exchange can be in flight, so queue every inverter and let loop() poll them back to
+  // back. A poll still queued from the previous cycle (radio busy the whole time) simply stays queued.
+  queue_poll_cycle_();
+}
+
+void HoymilesDtuComponent::queue_poll_cycle_() {
   for (auto *inverter : inverters_) {
-    if (inverter->due(now, this->get_update_interval())) {
-      start_request_(inverter, now);
-      break;
+    inverter->queue_poll();
+  }
+}
+
+HoymilesDtuInverter *HoymilesDtuComponent::next_due_inverter_() {
+  for (auto *inverter : inverters_) {
+    if (inverter->poll_pending()) {
+      return inverter;
     }
   }
+  return nullptr;
 }
 
 void HoymilesDtuComponent::loop() {
@@ -256,6 +263,8 @@ void HoymilesDtuComponent::loop() {
         }
         scan_pending_ = false;
         start_scan_(now);
+      } else if (HoymilesDtuInverter *inverter = next_due_inverter_()) {
+        start_request_(inverter, now);
       } else if (scan_detection_) {
         poll_monitor_(now);
       }
@@ -389,7 +398,7 @@ void HoymilesDtuComponent::start_request_(HoymilesDtuInverter *inverter, uint32_
     exit_monitor_();
   }
   active_inverter_ = inverter;
-  active_inverter_->mark_poll_started(now);
+  active_inverter_->mark_poll_started();
   exchange_kind_ = ExchangeKind::TELEMETRY;
   frame_count_ = 0;
   // Unknown until the inverter sends the fragment with the 0x80 "last" bit; until then never treat

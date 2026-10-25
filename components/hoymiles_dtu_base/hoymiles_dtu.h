@@ -62,8 +62,11 @@ class HoymilesDtuInverter {
   uint32_t get_last_seen() const { return last_seen_ms_; }
   const char *get_last_error() const { return last_error_; }
 
-  bool due(uint32_t now, uint32_t update_interval) const;
-  void mark_poll_started(uint32_t now) { last_poll_ms_ = now; }
+  // One telemetry poll per update interval: update() queues every inverter, and the hub's loop
+  // drains the queue one exchange at a time.
+  bool poll_pending() const { return poll_pending_; }
+  void queue_poll() { poll_pending_ = true; }
+  void mark_poll_started() { poll_pending_ = false; }
   void publish_telemetry(const HmTelemetry &telemetry, uint32_t now);
   void mark_offline_if_expired(uint32_t now, uint32_t timeout_ms);
   void set_last_error(const char *error) { last_error_ = error; }
@@ -75,7 +78,7 @@ class HoymilesDtuInverter {
   uint64_t radio_id_{0};
   HmModel model_{HM_1500};
   HmStatus status_{OFFLINE};
-  uint32_t last_poll_ms_{0};
+  bool poll_pending_{false};
   uint32_t last_seen_ms_{0};
   const char *last_error_{"never polled"};
   HmTelemetry telemetry_{};
@@ -152,6 +155,9 @@ class HoymilesDtuComponent : public PollingComponent,
 
   bool setup_radio_();
   void configure_radio_();
+  // Queue a poll of every inverter; called once per update interval.
+  void queue_poll_cycle_();
+  HoymilesDtuInverter *next_due_inverter_();
   void start_request_(HoymilesDtuInverter *inverter, uint32_t now);
   void start_power_limit_request_(uint32_t now);
   void transmit_request_(uint32_t now);
