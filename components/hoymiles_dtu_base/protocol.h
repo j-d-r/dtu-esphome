@@ -47,7 +47,7 @@ static constexpr uint32_t HM_CMT_CHANNEL_STEP_HZ = 250000;
 //
 // HMS model <-> printed serial prefix (OpenDTU HMS_*::isValidSerial, cross-checked against Ahoy
 // hmSystem.h): 1124 -> HMS_300..HMS_500, 1125/1400 -> HMS_450_V2/HMS_500_V2,
-// 1143/1144/114A/1410 -> HMS_600..HMS_1000, 1164/1166/1420 -> HMS_1600..HMS_2000.
+// 1143/1144/1146/114A/1410 -> HMS_600..HMS_1000, 1164/1166/1420/1421 -> HMS_1600..HMS_2000.
 enum HmModel : uint8_t {
   HM_300,
   HM_350,
