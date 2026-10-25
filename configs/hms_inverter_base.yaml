@@ -1,6 +1,7 @@
 ---
 # One HMS inverter: its entry on the CMT2300A hub plus the entities every model has.
-# Use hms_inverter_2ch.yaml / hms_inverter_4ch.yaml, which include this and add the DC channels.
+# Use inverter_1ch.yaml / inverter_2ch.yaml / inverter_4ch.yaml with family: hms, which include
+# this and add the DC channels.
 #
 # vars:
 #   dtu_id:   id of the hoymiles_dtu_cmt hub

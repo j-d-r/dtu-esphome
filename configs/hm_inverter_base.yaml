@@ -1,7 +1,7 @@
 ---
 # One HM inverter: its entry on the nRF24 hub plus the entities every model has.
-# Use hm_inverter_1ch.yaml / hm_inverter_2ch.yaml / hm_inverter_4ch.yaml, which include this and
-# add the DC channels.
+# Use inverter_1ch.yaml / inverter_2ch.yaml / inverter_4ch.yaml with family: hm, which include
+# this and add the DC channels.
 #
 # vars:
 #   dtu_id:   id of the hoymiles_dtu_rf24 hub
