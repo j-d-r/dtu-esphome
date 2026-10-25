@@ -10,8 +10,7 @@
 #include "driver/spi_master.h"
 #endif
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 // --- CMT2300A registers -------------------------------------------------------------------------
 // Register map and bit masks per the CMT2300A datasheet and CMOSTEK's reference driver
@@ -228,5 +227,4 @@ class Cmt2300a {
   bool rx_mode_{false};
 };
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

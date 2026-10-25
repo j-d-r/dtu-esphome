@@ -4,8 +4,7 @@
 
 #include <cstring>
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 static uint16_t read_u16_be(const uint8_t *data, size_t offset) {
   return (static_cast<uint16_t>(data[offset]) << 8) | data[offset + 1];
@@ -659,5 +658,4 @@ const char *hm_status_to_string(HmStatus status) {
   return "unknown";
 }
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

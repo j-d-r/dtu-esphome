@@ -6,8 +6,7 @@
 #include <cstdio>
 #include <cstring>
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 static const char *const TAG = "hoymiles_dtu";
 
@@ -77,7 +76,7 @@ void HoymilesDtuRf24::setup() {
   ce_pin_->digital_write(false);
   if (irq_pin_ != nullptr) {
     irq_pin_->setup();
-    irq_pin_->attach_interrupt(&HoymilesDtuRf24::irq_handler_, this, gpio::INTERRUPT_FALLING_EDGE);
+    irq_pin_->attach_interrupt(&HoymilesDtuRf24::irq_handler, this, gpio::INTERRUPT_FALLING_EDGE);
     irq_attached_ = true;
   } else if (irq_pin_base_ != nullptr) {
     irq_pin_base_->setup();
@@ -205,7 +204,7 @@ bool HoymilesDtuRf24::setup_radio_() {
   detected_setup_aw_ = read_register_(NRF_REG_SETUP_AW);
   write_register_(NRF_REG_SETUP_AW, restore_setup_aw);
 
-  if (!plausible_status_(detected_status_) || detected_setup_aw_ != 0x03) {
+  if (!plausible_status(detected_status_) || detected_setup_aw_ != 0x03) {
     return false;
   }
   configure_radio_();
@@ -246,7 +245,7 @@ void HoymilesDtuRf24::consume_irq_() {
   irq_pending_ = false;
 }
 
-void IRAM_ATTR HoymilesDtuRf24::irq_handler_(HoymilesDtuRf24 *arg) {
+void IRAM_ATTR HoymilesDtuRf24::irq_handler(HoymilesDtuRf24 *arg) {
   arg->irq_pending_ = true;
   arg->enable_loop_soon_any_context();
 }
@@ -851,9 +850,8 @@ uint8_t HoymilesDtuRf24::command_(uint8_t command, const uint8_t *tx, uint8_t *r
   return status;
 }
 
-bool HoymilesDtuRf24::plausible_status_(uint8_t status) {
+bool HoymilesDtuRf24::plausible_status(uint8_t status) {
   return status != 0x00 && status != 0xFF && (status & 0x80) == 0;
 }
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

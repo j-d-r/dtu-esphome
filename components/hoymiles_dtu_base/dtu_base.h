@@ -11,8 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 struct HmChannelSensors {
   sensor::Sensor *dc_voltage{nullptr};
@@ -183,5 +182,4 @@ class RadioSetPowerLimitAction : public Action<Ts...>, public Parented<HoymilesD
   }
 };
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

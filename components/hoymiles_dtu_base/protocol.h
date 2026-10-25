@@ -4,8 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 static constexpr uint8_t HM_MAX_CHANNELS = 4;
 static constexpr uint8_t HM_MAX_FRAME_COUNT = 8;
@@ -228,5 +227,4 @@ bool hm_parse_search_id_response(const uint8_t *packet, uint8_t len, HmDiscovere
 // suffix; pid stays 0 (a collect-info reply carries no PID). Validates CRC8.
 bool hm_parse_collect_info_response(const uint8_t *packet, uint8_t len, HmDiscoveredInverter *out);
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

@@ -4,8 +4,7 @@
 #include "esphome/components/hoymiles_dtu_base/dtu_base.h"
 #include "esphome/core/gpio.h"
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 // DTU hub for HMS-series inverters, which use a CMT2300A sub-GHz transceiver instead of the nRF24
 // the HM series uses. The application protocol is the same (same request framing, same fragment
@@ -78,7 +77,7 @@ class HoymilesDtuCmt : public HoymilesDtuBase {
   // filter, so this simply classifies everything that decodes on our working frequency.
   void poll_monitor_(uint32_t now);
   void exit_monitor_();
-  static void gpio3_handler_(HoymilesDtuCmt *arg);
+  static void gpio3_handler(HoymilesDtuCmt *arg);
 
   Cmt2300a radio_;
   GPIOPin *sclk_pin_{nullptr};
@@ -104,5 +103,4 @@ class HoymilesDtuCmt : public HoymilesDtuBase {
   HighFrequencyLoopRequester high_freq_;
 };
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu

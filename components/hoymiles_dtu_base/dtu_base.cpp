@@ -6,8 +6,7 @@
 #include <cstring>
 #include <ctime>
 
-namespace esphome {
-namespace hoymiles_dtu {
+namespace esphome::hoymiles_dtu {
 
 static const char *const TAG = "hoymiles_dtu";
 
@@ -329,5 +328,4 @@ void HoymilesDtuBase::log_dtu_config_() {
   }
 }
 
-}  // namespace hoymiles_dtu
-}  // namespace esphome
+}  // namespace esphome::hoymiles_dtu
