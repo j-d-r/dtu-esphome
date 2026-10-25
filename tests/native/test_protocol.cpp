@@ -287,6 +287,85 @@ static void test_decode_hms_2ch() {
   CHECK(!near(hm.channels[0].dc_current, t.channels[0].dc_current));
 }
 
+// HERF-300 per OpenDTU HERF_1CH.cpp: HMS-450/500 v2 DC offsets, 2-channel AC offsets, and both
+// reactive power and the event code read from offset 40.
+static void test_decode_herf_1ch() {
+  uint8_t p[44];
+  memset(p, 0, sizeof(p));
+  put16(p, 2, 3300);     // udc 330.0
+  put16(p, 6, 520);      // idc 5.20
+  put16(p, 10, 1716);    // pdc 171.6
+  put32(p, 14, 120000);  // yt 120.000
+  put16(p, 22, 640);     // yd 640
+  put16(p, 26, 2298);    // uac 229.8
+  put16(p, 28, 4998);    // f 49.98
+  put16(p, 30, 1650);    // pac 165.0
+  put16(p, 34, 72);      // iac 0.72
+  put16(p, 36, 998);     // pf 0.998
+  put16(p, 38, 287);     // temp 28.7
+  put16(p, 40, 25);      // q 2.5 and evt 25 (same slot)
+  HmTelemetry t;
+  CHECK(hm_model_channel_count(HERF_300) == 1);
+  CHECK(!hm_model_is_hms(HERF_300));
+  CHECK(strcmp(hm_model_to_string(HERF_300), "HERF-300") == 0);
+  CHECK(hm_parse_realtime_payload(HERF_300, p, 42, &t));
+  CHECK_NEAR(t.channels[0].dc_voltage, 330.0f);
+  CHECK_NEAR(t.channels[0].dc_current, 5.2f);
+  CHECK_NEAR(t.channels[0].dc_power, 171.6f);
+  CHECK_NEAR(t.channels[0].yield_today, 640.0f);
+  CHECK_NEAR(t.channels[0].yield_total, 120.0f);
+  CHECK_NEAR(t.ac_voltage, 229.8f);
+  CHECK_NEAR(t.ac_frequency, 49.98f);
+  CHECK_NEAR(t.ac_power, 165.0f);
+  CHECK_NEAR(t.ac_current, 0.72f);
+  CHECK_NEAR(t.power_factor, 0.998f);
+  CHECK_NEAR(t.temperature, 28.7f);
+  CHECK_NEAR(t.reactive_power, 2.5f);
+  CHECK(t.event_code == 25);
+  CHECK(!hm_parse_realtime_payload(HERF_300, p, 41, &t));
+}
+
+static bool same_telemetry(const HmTelemetry &a, const HmTelemetry &b) {
+  if (a.valid != b.valid || a.ac_voltage != b.ac_voltage || a.ac_current != b.ac_current || a.ac_power != b.ac_power ||
+      a.reactive_power != b.reactive_power || a.ac_frequency != b.ac_frequency || a.power_factor != b.power_factor ||
+      a.temperature != b.temperature || a.yield_today != b.yield_today || a.yield_total != b.yield_total ||
+      a.event_code != b.event_code) {
+    return false;
+  }
+  for (uint8_t i = 0; i < HM_MAX_CHANNELS; i++) {
+    const HmChannelData &x = a.channels[i];
+    const HmChannelData &y = b.channels[i];
+    if (x.dc_voltage != y.dc_voltage || x.dc_current != y.dc_current || x.dc_power != y.dc_power ||
+        x.yield_today != y.yield_today || x.yield_total != y.yield_total) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// HERF-600/800 decode exactly like HMS-600..1000, and HERF-1600/1800 exactly like HM-1000..1500.
+static void test_decode_herf_2ch_4ch() {
+  uint8_t p[64];
+  for (size_t i = 0; i < sizeof(p); i++) {
+    p[i] = static_cast<uint8_t>(i * 7 + 3);
+  }
+  HmTelemetry herf;
+  HmTelemetry reference;
+  CHECK(hm_model_channel_count(HERF_800) == 2);
+  CHECK(!hm_model_is_hms(HERF_800));
+  CHECK(hm_parse_realtime_payload(HERF_800, p, 42, &herf));
+  CHECK(hm_parse_realtime_payload(HMS_800, p, 42, &reference));
+  CHECK(same_telemetry(herf, reference));
+  CHECK(!hm_parse_realtime_payload(HERF_600, p, 41, &herf));
+
+  CHECK(hm_model_channel_count(HERF_1800) == 4);
+  CHECK(!hm_model_is_hms(HERF_1800));
+  CHECK(hm_parse_realtime_payload(HERF_1800, p, 62, &herf));
+  CHECK(hm_parse_realtime_payload(HM_1500, p, 62, &reference));
+  CHECK(same_telemetry(herf, reference));
+  CHECK(strcmp(hm_model_to_string(HERF_1600), "HERF-1600") == 0);
+}
+
 static void test_decode_hms_4ch() {
   uint8_t p[68];
   memset(p, 0, sizeof(p));
@@ -711,6 +790,8 @@ int main() {
   test_decode_hms_1ch_v2();
   test_decode_hms_2ch();
   test_decode_hms_4ch();
+  test_decode_herf_1ch();
+  test_decode_herf_2ch_4ch();
   test_classify_sniffed();
   test_scan_requests();
   test_scan_responses();

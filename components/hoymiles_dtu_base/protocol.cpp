@@ -313,6 +313,13 @@ constexpr HmModelLayout HMS_4CH_LAYOUT = {
 // two extra fields may be wrong on these models even though the DC/AC power values are not.
 constexpr HmModelLayout HMS_1CH_V2_LAYOUT = {1, 40, 26, 34, 30, 20, 28, 36, 38, 18, {{2, 6, 10, 22, 14}, {}, {}, {}}};
 
+// HERF record layouts (OpenDTU HERF_{1CH,2CH,4CH}.cpp; Ahoy has no HERF support). HERF-600/800 use
+// exactly the HMS 2-channel layout and HERF-1600/1800 the HM 4-channel one (OpenDTU's HERF_4CH is a
+// subclass of HM_4CH). HERF-300 has its own: the DC field offsets of the HMS-450/500 v2 record, with
+// the AC fields of a 2-channel record. OpenDTU marks its reactive power, temperature and event code
+// "to be verified", and reads both reactive power and the event code from offset 40.
+constexpr HmModelLayout HERF_1CH_LAYOUT = {1, 42, 26, 34, 30, 40, 28, 36, 38, 40, {{2, 6, 10, 22, 14}, {}, {}, {}}};
+
 const HmModelLayout *hm_model_layout(HmModel model) {
   switch (model) {
     case HM_300:
@@ -346,6 +353,14 @@ const HmModelLayout *hm_model_layout(HmModel model) {
     case HMS_1800:
     case HMS_2000:
       return &HMS_4CH_LAYOUT;
+    case HERF_300:
+      return &HERF_1CH_LAYOUT;
+    case HERF_600:
+    case HERF_800:
+      return &HMS_2CH_LAYOUT;
+    case HERF_1600:
+    case HERF_1800:
+      return &HM_4CH_LAYOUT;
   }
   return nullptr;
 }
@@ -379,6 +394,11 @@ bool hm_model_is_hms(HmModel model) {
     case HM_1000:
     case HM_1200:
     case HM_1500:
+    case HERF_300:
+    case HERF_600:
+    case HERF_800:
+    case HERF_1600:
+    case HERF_1800:
       break;
   }
   return false;
@@ -473,6 +493,16 @@ const char *hm_model_to_string(HmModel model) {
       return "HMS-1800";
     case HMS_2000:
       return "HMS-2000";
+    case HERF_300:
+      return "HERF-300";
+    case HERF_600:
+      return "HERF-600";
+    case HERF_800:
+      return "HERF-800";
+    case HERF_1600:
+      return "HERF-1600";
+    case HERF_1800:
+      return "HERF-1800";
   }
   return "unknown";
 }

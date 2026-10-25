@@ -1,6 +1,8 @@
-# HM or HMS inverter with 2 DC inputs (HM-600/700/800, HMS-600/700/800/900/1000).
-# vars: family (hm or hms, selects {family}_inverter_base.yaml), plus the vars of that base file.
-
+---
+# HM, HERF or HMS inverter with 2 DC inputs (HM-600/700/800, HERF-600/800,
+# HMS-600/700/800/900/1000).
+# vars: family (hm for HM and HERF, hms for HMS; selects {family}_inverter_base.yaml), plus the
+# vars of that base file.
 packages:
   inverter_base: !include
     file: ${family}_inverter_base.yaml
@@ -10,18 +12,17 @@ packages:
       name: ${name}
       serial: ${serial}
       model: ${model}
-
 sensor:
   - platform: hoymiles_dtu_base
     inverter_id: ${inverter}
     channels:
       - number: 1
-        dc_voltage: { name: "${name} CH1 DC Voltage" }
-        dc_current: { name: "${name} CH1 DC Current" }
-        dc_power: { name: "${name} CH1 DC Power" }
-        yield_today: { name: "${name} CH1 Yield Today" }
+        dc_voltage: {name: '${name} CH1 DC Voltage'}
+        dc_current: {name: '${name} CH1 DC Current'}
+        dc_power: {name: '${name} CH1 DC Power'}
+        yield_today: {name: '${name} CH1 Yield Today'}
       - number: 2
-        dc_voltage: { name: "${name} CH2 DC Voltage" }
-        dc_current: { name: "${name} CH2 DC Current" }
-        dc_power: { name: "${name} CH2 DC Power" }
-        yield_today: { name: "${name} CH2 Yield Today" }
+        dc_voltage: {name: '${name} CH2 DC Voltage'}
+        dc_current: {name: '${name} CH2 DC Current'}
+        dc_power: {name: '${name} CH2 DC Power'}
+        yield_today: {name: '${name} CH2 Yield Today'}

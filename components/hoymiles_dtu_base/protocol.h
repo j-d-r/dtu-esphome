@@ -43,11 +43,15 @@ static constexpr uint32_t HM_CMT_CHANNEL_STEP_HZ = 250000;
 // mirror Ahoy's nRF24 grouping by DC-input count (1-channel HM-300/350/400, 2-channel
 // HM-600/700/800, 4-channel HM-1000/1200/1500). The HMS families are the CMT2300A (sub-GHz) models;
 // their records use different field offsets than the same-channel-count HM records, so each HMS
-// family is its own layout (see hm_model_layout). HMT (3-phase) is not supported.
+// family is its own layout (see hm_model_layout). The HERF families are nRF24 models like HM, but
+// the 1- and 2-channel ones use their own record layouts (OpenDTU HERF_{1CH,2CH,4CH}.cpp).
+// HMT (3-phase) is not supported.
 //
 // HMS model <-> printed serial prefix (OpenDTU HMS_*::isValidSerial, cross-checked against Ahoy
 // hmSystem.h): 1124 -> HMS_300..HMS_500, 1125/1400 -> HMS_450_V2/HMS_500_V2,
 // 1143/1144/1146/114A/1410 -> HMS_600..HMS_1000, 1164/1166/1420/1421 -> HMS_1600..HMS_2000.
+// HERF (OpenDTU HERF_*::isValidSerial): 2841 -> HERF_300, 2821 -> HERF_600/800,
+// 2801 -> HERF_1600/1800.
 enum HmModel : uint8_t {
   HM_300,
   HM_350,
@@ -73,6 +77,11 @@ enum HmModel : uint8_t {
   HMS_1600,
   HMS_1800,
   HMS_2000,
+  HERF_300,
+  HERF_600,
+  HERF_800,
+  HERF_1600,
+  HERF_1800,
 };
 
 // True for the HMS families, i.e. the models that talk over a CMT2300A sub-GHz radio instead of an

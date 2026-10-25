@@ -22,6 +22,9 @@ OpenDTU - https://github.com/tbnobody/OpenDTU
     lib/CMT2300a/cmt_spi3.cpp (chip-select timing, one transaction per FIFO byte).
   - The 1146/1421 HMS serial prefixes in components/hoymiles_dtu_base/__init__.py,
     from OpenDTU lib/Hoymiles/src/inverters/{HMS_2CH,HMS_4CH}.cpp.
+  - The HERF model support (the HERF-300 record layout in
+    components/hoymiles_dtu_base/protocol.cpp and the HERF serial prefixes), from
+    OpenDTU lib/Hoymiles/src/inverters/{HERF_1CH,HERF_2CH,HERF_4CH}.cpp.
 
 AhoyDTU - https://github.com/lumapu/ahoy
   License: CC BY-NC-SA 4.0

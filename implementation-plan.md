@@ -73,6 +73,7 @@ In scope:
 
 - HM-300, HM-350, HM-400, HM-600, HM-700, HM-800, HM-1000, HM-1200, HM-1500
   over nRF24L01+.
+- HERF-300, HERF-600/800, HERF-1600/1800 over nRF24L01+.
 - HMS-300/350/400/450/500, HMS-450/500 v2, HMS-600/700/800/900/1000,
   HMS-1600/1800/2000 over CMT2300A.
 - Read-only telemetry first.
@@ -123,6 +124,12 @@ hardware.
 Added 2026-10-25: the build-time serial check also accepts the MI
 3rd-generation HM prefixes 1022/1042/1062 and the HMS prefixes 1146/1421.
 Details in `REFERENCE_NOTES.md`.
+
+Added 2026-10-25 (code and native tests, **not hardware-verified**): the HERF
+nRF24 models from OpenDTU. HERF-300 has its own record layout, HERF-600/800 use
+the HMS 2-channel layout and HERF-1600/1800 the HM 4-channel one. Details in
+`REFERENCE_NOTES.md`. Remaining: confirm the HERF-300 reactive power,
+temperature and event code against a real record.
 
 Tasks:
 

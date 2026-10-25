@@ -1,3 +1,4 @@
+---
 # One HMS inverter: its entry on the CMT2300A hub plus the entities every model has.
 # Use inverter_1ch.yaml / inverter_2ch.yaml / inverter_4ch.yaml with family: hms, which include
 # this and add the DC channels.
@@ -8,30 +9,27 @@
 #   name:     entity name prefix, e.g. HMS2000
 #   serial:   printed serial number (12 digits)
 #   model:    hms_* model, e.g. hms_2000
-
 hoymiles_dtu_cmt:
   id: !extend ${dtu_id}
   inverters:
     - id: ${inverter}
       serial: ${serial}
       model: ${model}
-
 sensor:
   - platform: hoymiles_dtu_base
     inverter_id: ${inverter}
-    ac_power: { name: "${name} AC Power" }
-    ac_voltage: { name: "${name} AC Voltage" }
-    ac_current: { name: "${name} AC Current" }
-    ac_frequency: { name: "${name} AC Frequency" }
-    reactive_power: { name: "${name} Reactive Power" }
-    power_factor: { name: "${name} Power Factor" }
-    temperature: { name: "${name} Temperature" }
-    yield_today: { name: "${name} Yield Today" }
-    yield_total: { name: "${name} Yield Total" }
-    signal_strength: { name: "${name} Signal Strength" }
-
+    ac_power: {name: '${name} AC Power'}
+    ac_voltage: {name: '${name} AC Voltage'}
+    ac_current: {name: '${name} AC Current'}
+    ac_frequency: {name: '${name} AC Frequency'}
+    reactive_power: {name: '${name} Reactive Power'}
+    power_factor: {name: '${name} Power Factor'}
+    temperature: {name: '${name} Temperature'}
+    yield_today: {name: '${name} Yield Today'}
+    yield_total: {name: '${name} Yield Total'}
+    signal_strength: {name: '${name} Signal Strength'}
 text_sensor:
   - platform: hoymiles_dtu_base
     inverter_id: ${inverter}
-    status: { name: "${name} Status" }
-    last_seen: { name: "${name} Last Seen" }
+    status: {name: '${name} Status'}
+    last_seen: {name: '${name} Last Seen'}

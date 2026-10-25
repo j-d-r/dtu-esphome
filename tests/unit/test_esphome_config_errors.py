@@ -96,6 +96,11 @@ CASES = [
         id="hm-model-on-cmt2300a",
     ),
     pytest.param(
+        CMT_HUB.format(serial="284100000000", model="herf_300", extra=""),
+        "nRF24",
+        id="herf-model-on-cmt2300a",
+    ),
+    pytest.param(
         CMT_HUB.format(
             serial="114400000000", model="hms_800", extra="  frequency: 865.1MHz"
         ),

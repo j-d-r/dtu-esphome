@@ -43,6 +43,13 @@ hoymiles_dtu_rf24:
     - id: hm4
       serial: "116100000000"
       model: hm_1500
+    # HERF-300 has its own 1-channel layout; HERF-1800 decodes like the HM 4-channel models.
+    - id: herf1
+      serial: "284100000000"
+      model: herf_300
+    - id: herf4
+      serial: "280100000000"
+      model: herf_1800
 
 sensor:
   - platform: hoymiles_dtu_base
@@ -68,6 +75,18 @@ sensor:
     channels:
       - number: 4
         dc_power: {name: "HM4 CH4 DC Power"}
+  - platform: hoymiles_dtu_base
+    inverter_id: herf1
+    ac_power: {name: "HERF1 AC Power"}
+    channels:
+      - number: 1
+        dc_power: {name: "HERF1 CH1 DC Power"}
+  - platform: hoymiles_dtu_base
+    inverter_id: herf4
+    ac_power: {name: "HERF4 AC Power"}
+    channels:
+      - number: 4
+        dc_power: {name: "HERF4 CH4 DC Power"}
 
 text_sensor:
   - platform: hoymiles_dtu_base

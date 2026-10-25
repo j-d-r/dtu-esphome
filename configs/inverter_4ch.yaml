@@ -1,6 +1,8 @@
-# HM or HMS inverter with 4 DC inputs (HM-1000/1200/1500, HMS-1600/1800/2000).
-# vars: family (hm or hms, selects {family}_inverter_base.yaml), plus the vars of that base file.
-
+---
+# HM, HERF or HMS inverter with 4 DC inputs (HM-1000/1200/1500, HERF-1600/1800,
+# HMS-1600/1800/2000).
+# vars: family (hm for HM and HERF, hms for HMS; selects {family}_inverter_base.yaml), plus the
+# vars of that base file.
 packages:
   inverter_base: !include
     file: ${family}_inverter_base.yaml
@@ -10,28 +12,27 @@ packages:
       name: ${name}
       serial: ${serial}
       model: ${model}
-
 sensor:
   - platform: hoymiles_dtu_base
     inverter_id: ${inverter}
     channels:
       - number: 1
-        dc_voltage: { name: "${name} CH1 DC Voltage" }
-        dc_current: { name: "${name} CH1 DC Current" }
-        dc_power: { name: "${name} CH1 DC Power" }
-        yield_today: { name: "${name} CH1 Yield Today" }
+        dc_voltage: {name: '${name} CH1 DC Voltage'}
+        dc_current: {name: '${name} CH1 DC Current'}
+        dc_power: {name: '${name} CH1 DC Power'}
+        yield_today: {name: '${name} CH1 Yield Today'}
       - number: 2
-        dc_voltage: { name: "${name} CH2 DC Voltage" }
-        dc_current: { name: "${name} CH2 DC Current" }
-        dc_power: { name: "${name} CH2 DC Power" }
-        yield_today: { name: "${name} CH2 Yield Today" }
+        dc_voltage: {name: '${name} CH2 DC Voltage'}
+        dc_current: {name: '${name} CH2 DC Current'}
+        dc_power: {name: '${name} CH2 DC Power'}
+        yield_today: {name: '${name} CH2 Yield Today'}
       - number: 3
-        dc_voltage: { name: "${name} CH3 DC Voltage" }
-        dc_current: { name: "${name} CH3 DC Current" }
-        dc_power: { name: "${name} CH3 DC Power" }
-        yield_today: { name: "${name} CH3 Yield Today" }
+        dc_voltage: {name: '${name} CH3 DC Voltage'}
+        dc_current: {name: '${name} CH3 DC Current'}
+        dc_power: {name: '${name} CH3 DC Power'}
+        yield_today: {name: '${name} CH3 Yield Today'}
       - number: 4
-        dc_voltage: { name: "${name} CH4 DC Voltage" }
-        dc_current: { name: "${name} CH4 DC Current" }
-        dc_power: { name: "${name} CH4 DC Power" }
-        yield_today: { name: "${name} CH4 Yield Today" }
+        dc_voltage: {name: '${name} CH4 DC Voltage'}
+        dc_current: {name: '${name} CH4 DC Current'}
+        dc_power: {name: '${name} CH4 DC Power'}
+        yield_today: {name: '${name} CH4 Yield Today'}

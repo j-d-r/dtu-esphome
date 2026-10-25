@@ -226,3 +226,21 @@ Prefixes accepted by the build-time model/serial check:
 - OpenDTU's HM rule is wider still (any `x12x` / `x14x` / `x16x` prefix not
   claimed by an HMS family first); this component keeps an explicit list,
   since the check only warns.
+
+## HERF models, 2026-10-25
+
+Source: OpenDTU `lib/Hoymiles/src/inverters/{HERF_1CH,HERF_2CH,HERF_4CH}.cpp`
+`isValidSerial()` and `byteAssignment[]`, from the same OpenDTU checkout as above.
+Ahoy has no HERF support. Not hardware-verified.
+
+- **HERF** inverters are nRF24 (OpenDTU derives them from `HM_Abstract` /
+  `HM_4CH` and attaches them to the nRF24 radio). Prefixes: 2841 -> HERF-300,
+  2821 -> HERF-600/800, 2801 -> HERF-1600/1800.
+- **Record layouts:**
+  - HERF-600/800 are byte for byte the HMS 2-channel layout.
+  - HERF-1600/1800 are the HM 4-channel layout (`HERF_4CH` subclasses `HM_4CH`).
+  - HERF-300 has its own layout: DC fields at the HMS-450/500 v2 offsets
+    (UDC 2, IDC 6, PDC 10, YT 14, YD 22), AC fields at the 2-channel offsets
+    (UAC 26, F 28, PAC 30, IAC 34, PF 36), T 38, length 42. OpenDTU reads both
+    reactive power and the event code from offset 40, and marks Q, T and EVT
+    "to be verified"; this component does the same.
