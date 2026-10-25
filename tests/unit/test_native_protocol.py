@@ -63,20 +63,39 @@ def test_native_protocol(tmp_path):
 
 
 def _model_channel_counts() -> dict[str, int]:
-    """MODEL_CHANNEL_COUNTS from the component, evaluated without importing esphome."""
-    source = (COMPONENT / "__init__.py").read_text()
-    for node in ast.parse(source).body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "MODEL_CHANNEL_COUNTS"
-            for t in node.targets
-        ):
+    """DC inputs per model from the component's MODELS table, read without esphome.
+
+    Module-level literal assignments (radio names, prefix tuples) are evaluated as is;
+    HmModel.X and ModelInfo(...) are replaced by stand-ins.
+    """
+
+    class _Enum:
+        def __getattr__(self, name):
+            return name
+
+    def model_info(model, radio, channels, prefixes):
+        return channels
+
+    namespace = {"HmModel": _Enum(), "ModelInfo": model_info}
+    tree = ast.parse((COMPONENT / "__init__.py").read_text())
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        if target.id == "MODELS":
             expression = ast.Expression(node.value)
-            return eval(compile(expression, "MODEL_CHANNEL_COUNTS", "eval"), {})
-    raise AssertionError("MODEL_CHANNEL_COUNTS not found")
+            return eval(compile(expression, "MODELS", "eval"), namespace)
+        try:
+            namespace[target.id] = ast.literal_eval(node.value)
+        except ValueError:
+            pass
+    raise AssertionError("MODELS not found")
 
 
 def test_channel_counts_match_cpp(tmp_path):
-    """The Python channel table (config warnings) must agree with protocol.cpp."""
+    """MODELS channel counts (config warnings) must agree with protocol.cpp."""
     compiler = _find_compiler()
     if compiler is None:
         pytest.skip("no C++ compiler available")

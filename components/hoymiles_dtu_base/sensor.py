@@ -34,7 +34,7 @@ from esphome.const import (
 from esphome.core import CORE
 
 from . import (
-    MODEL_CHANNEL_COUNTS,
+    MODELS,
     HoymilesDtuBase,
     HoymilesDtuInverter,
     find_inverter_model,
@@ -233,11 +233,11 @@ def _check_channels(config):
 
     full_config = fv.full_config.get()
     model = find_inverter_model(full_config, config[CONF_INVERTER_ID])
-    count = MODEL_CHANNEL_COUNTS.get(model)
     declared = _declared_channels(full_config, inverter_id)
-    if count is None or not declared:
+    if model is None or not declared:
         # No channels at all reads as a deliberate choice (AC values only).
         return config
+    count = MODELS[model].channels
     inputs = f"{count} DC input{'' if count == 1 else 's'}"
 
     def channel_list(numbers):
