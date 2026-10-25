@@ -1,8 +1,9 @@
-# HMS inverter with 4 DC inputs (HMS-1600/1800/2000). vars: see hms_inverter_base.yaml.
+# HM or HMS inverter with 2 DC inputs (HM-600/700/800, HMS-600/700/800/900/1000).
+# vars: family (hm or hms, selects {family}_inverter_base.yaml), plus the vars of that base file.
 
 packages:
-  hms_inverter_base: !include
-    file: hms_inverter_base.yaml
+  inverter_base: !include
+    file: ${family}_inverter_base.yaml
     vars:
       dtu_id: ${dtu_id}
       inverter: ${inverter}
@@ -24,13 +25,3 @@ sensor:
         dc_current: { name: "${name} CH2 DC Current" }
         dc_power: { name: "${name} CH2 DC Power" }
         yield_today: { name: "${name} CH2 Yield Today" }
-      - number: 3
-        dc_voltage: { name: "${name} CH3 DC Voltage" }
-        dc_current: { name: "${name} CH3 DC Current" }
-        dc_power: { name: "${name} CH3 DC Power" }
-        yield_today: { name: "${name} CH3 Yield Today" }
-      - number: 4
-        dc_voltage: { name: "${name} CH4 DC Voltage" }
-        dc_current: { name: "${name} CH4 DC Current" }
-        dc_power: { name: "${name} CH4 DC Power" }
-        yield_today: { name: "${name} CH4 Yield Today" }
