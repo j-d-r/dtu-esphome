@@ -283,7 +283,9 @@ scan itself (`scan_inverters`). Both are described, with their limits, in
 For anyone extending the component or debugging a link that won't acquire,
 [docs/rf-protocol.md](docs/rf-protocol.md) walks through the HM/nRF24 link
 (addressing, the telemetry exchange, the power-limit path) and what differs on
-HMS over CMT2300A.
+HMS over CMT2300A. [docs/hoymiles-protocol.md](docs/hoymiles-protocol.md) is
+the byte-level reference: packet layouts, checksums, discovery, the realtime
+record fields and the control commands, with annotated hex examples.
 
 ## Development
 

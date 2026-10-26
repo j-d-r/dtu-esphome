@@ -10,6 +10,9 @@ are `components/hoymiles_dtu_rf24/dtu_rf24.{h,cpp}` (nRF24 driver + async
 state machine) and `components/hoymiles_dtu_cmt/` with `dtu_cmt.{h,cpp}` and
 `cmt2300a.{h,cpp}` (CMT2300A driver + its state machine).
 
+For the packets themselves, byte by byte with hex examples, see
+[hoymiles-protocol.md](hoymiles-protocol.md).
+
 The sections below describe the HM/nRF24 link, which is the verified one;
 [HMS over CMT2300A](#hms-over-cmt2300a) then lists what differs.
 
