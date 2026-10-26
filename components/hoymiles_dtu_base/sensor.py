@@ -237,7 +237,7 @@ def _check_channels(config):
     if model is None or not declared:
         # No channels at all reads as a deliberate choice (AC values only).
         return config
-    count = MODELS[model].channels
+    count = MODELS[model].family.channels
     inputs = f"{count} DC input{'' if count == 1 else 's'}"
 
     def channel_list(numbers):

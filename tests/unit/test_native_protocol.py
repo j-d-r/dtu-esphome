@@ -65,18 +65,21 @@ def test_native_protocol(tmp_path):
 def _model_channel_counts() -> dict[str, int]:
     """DC inputs per model from the component's MODELS table, read without esphome.
 
-    Module-level literal assignments (radio names, prefix tuples) are evaluated as is;
-    HmModel.X and ModelInfo(...) are replaced by stand-ins.
+    Module-level literal assignments (radio names) are evaluated as is; HmModel.X,
+    Family(...) and ModelInfo(...) are replaced by stand-ins.
     """
 
     class _Enum:
         def __getattr__(self, name):
             return name
 
-    def model_info(model, radio, channels, prefixes):
+    def family(radio, channels, prefixes):
         return channels
 
-    namespace = {"HmModel": _Enum(), "ModelInfo": model_info}
+    def model_info(model, channels):
+        return channels
+
+    namespace = {"HmModel": _Enum(), "Family": family, "ModelInfo": model_info}
     tree = ast.parse((COMPONENT / "__init__.py").read_text())
     for node in tree.body:
         if not isinstance(node, ast.Assign) or len(node.targets) != 1:
@@ -87,8 +90,17 @@ def _model_channel_counts() -> dict[str, int]:
         if target.id == "MODELS":
             expression = ast.Expression(node.value)
             return eval(compile(expression, "MODELS", "eval"), namespace)
+        value = node.value
+        if (
+            isinstance(value, ast.Call)
+            and isinstance(value.func, ast.Name)
+            and value.func.id == "Family"
+        ):
+            code = compile(ast.Expression(value), target.id, "eval")
+            namespace[target.id] = eval(code, namespace)
+            continue
         try:
-            namespace[target.id] = ast.literal_eval(node.value)
+            namespace[target.id] = ast.literal_eval(value)
         except ValueError:
             pass
     raise AssertionError("MODELS not found")

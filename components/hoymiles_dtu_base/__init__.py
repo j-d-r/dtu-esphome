@@ -46,53 +46,61 @@ RADIOS = {
 HUB_DOMAINS = tuple(domain for domain, _ in RADIOS.values())
 
 
-class ModelInfo(NamedTuple):
-    model: MockObj  # HmModel enum value
+class Family(NamedTuple):
+    """A hardware family: every model in it shares one record layout."""
+
     radio: str  # NRF24 or CMT
     channels: int  # channel count
     prefixes: tuple[str, ...]  # serial prefixes, as printed (first 4 hex digits)
 
 
+HM_1CH = Family(NRF24, 1, ("1022", "1121", "1122"))
+HM_2CH = Family(NRF24, 2, ("1042", "1141", "1142"))
+HM_4CH = Family(NRF24, 4, ("1062", "1161", "1162"))
+HERF_1CH = Family(NRF24, 1, ("2841",))
+HERF_2CH = Family(NRF24, 2, ("2821",))
+HERF_4CH = Family(NRF24, 4, ("2801",))
+HMS_1CH = Family(CMT, 1, ("1124",))
+HMS_1CH_V2 = Family(CMT, 1, ("1125", "1400"))
+HMS_2CH = Family(CMT, 2, ("1143", "1144", "1146", "114A", "1410"))
+HMS_4CH = Family(CMT, 4, ("1164", "1166", "1420", "1421"))
+
+
+class ModelInfo(NamedTuple):
+    model: MockObj  # HmModel enum value
+    family: Family
+
+
 MODELS = {
-    "hm_300": ModelInfo(HmModel.HM_300, NRF24, 1, ("1022", "1121", "1122")),
-    "hm_350": ModelInfo(HmModel.HM_350, NRF24, 1, ("1022", "1121", "1122")),
-    "hm_400": ModelInfo(HmModel.HM_400, NRF24, 1, ("1022", "1121", "1122")),
-    "hm_600": ModelInfo(HmModel.HM_600, NRF24, 2, ("1042", "1141", "1142")),
-    "hm_700": ModelInfo(HmModel.HM_700, NRF24, 2, ("1042", "1141", "1142")),
-    "hm_800": ModelInfo(HmModel.HM_800, NRF24, 2, ("1042", "1141", "1142")),
-    "hm_1000": ModelInfo(HmModel.HM_1000, NRF24, 4, ("1062", "1161", "1162")),
-    "hm_1200": ModelInfo(HmModel.HM_1200, NRF24, 4, ("1062", "1161", "1162")),
-    "hm_1500": ModelInfo(HmModel.HM_1500, NRF24, 4, ("1062", "1161", "1162")),
-    "herf_300": ModelInfo(HmModel.HERF_300, NRF24, 1, ("2841",)),
-    "herf_600": ModelInfo(HmModel.HERF_600, NRF24, 2, ("2821",)),
-    "herf_800": ModelInfo(HmModel.HERF_800, NRF24, 2, ("2821",)),
-    "herf_1600": ModelInfo(HmModel.HERF_1600, NRF24, 4, ("2801",)),
-    "herf_1800": ModelInfo(HmModel.HERF_1800, NRF24, 4, ("2801",)),
-    "hms_300": ModelInfo(HmModel.HMS_300, CMT, 1, ("1124",)),
-    "hms_350": ModelInfo(HmModel.HMS_350, CMT, 1, ("1124",)),
-    "hms_400": ModelInfo(HmModel.HMS_400, CMT, 1, ("1124",)),
-    "hms_450": ModelInfo(HmModel.HMS_450, CMT, 1, ("1124",)),
-    "hms_500": ModelInfo(HmModel.HMS_500, CMT, 1, ("1124",)),
-    "hms_450_v2": ModelInfo(HmModel.HMS_450_V2, CMT, 1, ("1125", "1400")),
-    "hms_500_v2": ModelInfo(HmModel.HMS_500_V2, CMT, 1, ("1125", "1400")),
-    "hms_600": ModelInfo(
-        HmModel.HMS_600, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
-    ),
-    "hms_700": ModelInfo(
-        HmModel.HMS_700, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
-    ),
-    "hms_800": ModelInfo(
-        HmModel.HMS_800, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
-    ),
-    "hms_900": ModelInfo(
-        HmModel.HMS_900, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
-    ),
-    "hms_1000": ModelInfo(
-        HmModel.HMS_1000, CMT, 2, ("1143", "1144", "1146", "114A", "1410")
-    ),
-    "hms_1600": ModelInfo(HmModel.HMS_1600, CMT, 4, ("1164", "1166", "1420", "1421")),
-    "hms_1800": ModelInfo(HmModel.HMS_1800, CMT, 4, ("1164", "1166", "1420", "1421")),
-    "hms_2000": ModelInfo(HmModel.HMS_2000, CMT, 4, ("1164", "1166", "1420", "1421")),
+    "hm_300": ModelInfo(HmModel.HM_300, HM_1CH),
+    "hm_350": ModelInfo(HmModel.HM_350, HM_1CH),
+    "hm_400": ModelInfo(HmModel.HM_400, HM_1CH),
+    "hm_600": ModelInfo(HmModel.HM_600, HM_2CH),
+    "hm_700": ModelInfo(HmModel.HM_700, HM_2CH),
+    "hm_800": ModelInfo(HmModel.HM_800, HM_2CH),
+    "hm_1000": ModelInfo(HmModel.HM_1000, HM_4CH),
+    "hm_1200": ModelInfo(HmModel.HM_1200, HM_4CH),
+    "hm_1500": ModelInfo(HmModel.HM_1500, HM_4CH),
+    "herf_300": ModelInfo(HmModel.HERF_300, HERF_1CH),
+    "herf_600": ModelInfo(HmModel.HERF_600, HERF_2CH),
+    "herf_800": ModelInfo(HmModel.HERF_800, HERF_2CH),
+    "herf_1600": ModelInfo(HmModel.HERF_1600, HERF_4CH),
+    "herf_1800": ModelInfo(HmModel.HERF_1800, HERF_4CH),
+    "hms_300": ModelInfo(HmModel.HMS_300, HMS_1CH),
+    "hms_350": ModelInfo(HmModel.HMS_350, HMS_1CH),
+    "hms_400": ModelInfo(HmModel.HMS_400, HMS_1CH),
+    "hms_450": ModelInfo(HmModel.HMS_450, HMS_1CH),
+    "hms_500": ModelInfo(HmModel.HMS_500, HMS_1CH),
+    "hms_450_v2": ModelInfo(HmModel.HMS_450_V2, HMS_1CH_V2),
+    "hms_500_v2": ModelInfo(HmModel.HMS_500_V2, HMS_1CH_V2),
+    "hms_600": ModelInfo(HmModel.HMS_600, HMS_2CH),
+    "hms_700": ModelInfo(HmModel.HMS_700, HMS_2CH),
+    "hms_800": ModelInfo(HmModel.HMS_800, HMS_2CH),
+    "hms_900": ModelInfo(HmModel.HMS_900, HMS_2CH),
+    "hms_1000": ModelInfo(HmModel.HMS_1000, HMS_2CH),
+    "hms_1600": ModelInfo(HmModel.HMS_1600, HMS_4CH),
+    "hms_1800": ModelInfo(HmModel.HMS_1800, HMS_4CH),
+    "hms_2000": ModelInfo(HmModel.HMS_2000, HMS_4CH),
 }
 
 
@@ -129,7 +137,7 @@ def _validate_inverter(config):
     # plausible-looking nonsense rather than failing. Only warn, though - the prefix
     # lists are what OpenDTU and Ahoy know about, and Hoymiles keeps adding
     # hardware revisions.
-    prefixes = MODELS[config[CONF_MODEL]].prefixes
+    prefixes = MODELS[config[CONF_MODEL]].family.prefixes
     prefix = f"{config[CONF_SERIAL] >> 32:04X}"
     if prefix not in prefixes:
         expected = " or ".join(prefixes)
@@ -179,7 +187,7 @@ def validate_inverter_models(radio):
     def validator(config):
         for index, inverter in enumerate(config[CONF_INVERTERS]):
             model = inverter[CONF_MODEL]
-            needed = MODELS[model].radio
+            needed = MODELS[model].family.radio
             if needed != radio:
                 component, name = RADIOS[needed]
                 raise cv.Invalid(
