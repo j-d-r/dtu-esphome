@@ -1,5 +1,6 @@
 ---
-# Hub-level entities of a hoymiles_dtu_rf24 hub. Include once per hub, not per inverter.
+# Hub-level entities of a hoymiles_dtu_rf24 hub. Included through configs/dtu.yaml, once per
+# hub.
 # The scan entities stay empty unless scan_detection (passive) or the scan_inverters action /
 # scan_on_boot (active) is used.
 #

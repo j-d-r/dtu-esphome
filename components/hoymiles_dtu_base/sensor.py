@@ -256,8 +256,8 @@ def _check_channels(config):
     if missing := [n for n in range(1, count + 1) if n not in declared]:
         _LOGGER.warning(
             "hoymiles_dtu_base: inverter %s (model %s) has %s, but no sensors are "
-            "declared for %s. Check the model, or add them (with the packages: use "
-            "the inverter_%dch.yaml that matches the model).",
+            "declared for %s. Check the model, or add them (with the packages: set "
+            "channels: %d on the inverter.yaml package).",
             inverter_id,
             model,
             inputs,

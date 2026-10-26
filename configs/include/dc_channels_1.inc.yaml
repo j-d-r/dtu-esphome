@@ -1,0 +1,18 @@
+---
+# DC channel entities of an inverter with 1 DC input (HM-300/350/400, HERF-300,
+# HMS-300/350/400/450/500, HMS-450/500 v2).
+# Included by inverter_base_rf24.inc.yaml / inverter_base_cmt.inc.yaml with channels: 1; not
+# meant to be included directly.
+#
+# vars:
+#   id:       id of the inverter
+#   name:     entity name prefix
+sensor:
+  - platform: hoymiles_dtu_base
+    inverter_id: ${id}
+    channels:
+      - number: 1
+        dc_voltage: {name: '${name} CH1 DC Voltage'}
+        dc_current: {name: '${name} CH1 DC Current'}
+        dc_power: {name: '${name} CH1 DC Power'}
+        yield_today: {name: '${name} CH1 Yield Today'}

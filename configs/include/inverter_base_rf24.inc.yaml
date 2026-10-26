@@ -1,23 +1,30 @@
 ---
 # One HM or HERF inverter: its entry on the nRF24 hub plus the entities every model has.
-# Use inverter_1ch.yaml / inverter_2ch.yaml / inverter_4ch.yaml with family: hm, which include
-# this and add the DC channels.
+# The DC channel entities come from dc_channels_<channels>.inc.yaml. Included through
+# configs/inverter.yaml.
 #
 # vars:
+#   id:       id of this inverter
 #   dtu_id:   id of the hoymiles_dtu_rf24 hub
-#   inverter: id of this inverter
-#   name:     entity name prefix, e.g. HM1200
-#   serial:   printed serial number (12 digits)
 #   model:    hm_* or herf_* model, e.g. hm_1200
+#   serial:   printed serial number (12 digits)
+#   name:     entity name prefix, e.g. HM1200
+#   channels: number of DC inputs of the model: 1, 2 or 4
 hoymiles_dtu_rf24:
   id: !extend ${dtu_id}
   inverters:
-    - id: ${inverter}
+    - id: ${id}
       serial: ${serial}
       model: ${model}
+packages:
+  dc_channels: !include
+    file: dc_channels_${channels}.inc.yaml
+    vars:
+      id: ${id}
+      name: ${name}
 sensor:
   - platform: hoymiles_dtu_base
-    inverter_id: ${inverter}
+    inverter_id: ${id}
     ac_power: {name: '${name} AC Power'}
     ac_voltage: {name: '${name} AC Voltage'}
     ac_current: {name: '${name} AC Current'}
@@ -29,6 +36,6 @@ sensor:
     yield_total: {name: '${name} Yield Total'}
 text_sensor:
   - platform: hoymiles_dtu_base
-    inverter_id: ${inverter}
+    inverter_id: ${id}
     status: {name: '${name} Status'}
     last_seen: {name: '${name} Last Seen'}

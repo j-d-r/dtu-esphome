@@ -1,0 +1,22 @@
+---
+# One inverter of any supported family: includes include/inverter_base_rf24.inc.yaml or
+# include/inverter_base_cmt.inc.yaml depending on type.
+#
+# vars:
+#   id:       id of this inverter
+#   dtu_id:   id of the hoymiles_dtu_rf24 (type: rf24) or hoymiles_dtu_cmt (type: cmt) hub
+#   type:     rf24 for HM and HERF (nRF24 hub), cmt for HMS (CMT2300A hub)
+#   model:    model, e.g. hm_1200, herf_800 or hms_2000
+#   serial:   printed serial number (12 digits)
+#   name:     entity name prefix, e.g. HM1200
+#   channels: number of DC inputs of the model: 1, 2 or 4
+packages:
+  inverter_base: !include
+    file: include/inverter_base_${type}.inc.yaml
+    vars:
+      id: ${id}
+      dtu_id: ${dtu_id}
+      model: ${model}
+      serial: ${serial}
+      name: ${name}
+      channels: ${channels}

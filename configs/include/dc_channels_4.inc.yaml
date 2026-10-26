@@ -1,20 +1,15 @@
 ---
-# HM, HERF or HMS inverter with 4 DC inputs (HM-1000/1200/1500, HERF-1600/1800,
+# DC channel entities of an inverter with 4 DC inputs (HM-1000/1200/1500, HERF-1600/1800,
 # HMS-1600/1800/2000).
-# vars: family (hm for HM and HERF, hms for HMS; selects {family}_inverter_base.yaml), plus the
-# vars of that base file.
-packages:
-  inverter_base: !include
-    file: ${family}_inverter_base.yaml
-    vars:
-      dtu_id: ${dtu_id}
-      inverter: ${inverter}
-      name: ${name}
-      serial: ${serial}
-      model: ${model}
+# Included by inverter_base_rf24.inc.yaml / inverter_base_cmt.inc.yaml with channels: 4; not
+# meant to be included directly.
+#
+# vars:
+#   id:       id of the inverter
+#   name:     entity name prefix
 sensor:
   - platform: hoymiles_dtu_base
-    inverter_id: ${inverter}
+    inverter_id: ${id}
     channels:
       - number: 1
         dc_voltage: {name: '${name} CH1 DC Voltage'}

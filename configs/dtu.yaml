@@ -1,0 +1,14 @@
+---
+# Hub-level entities of a DTU hub of any type: includes include/dtu_rf24.inc.yaml or
+# include/dtu_cmt.inc.yaml depending on type. Include once per hub, not per inverter.
+#
+# vars:
+#   dtu_id: id of the hub
+#   type:   rf24 for a hoymiles_dtu_rf24 hub (HM, HERF), cmt for a hoymiles_dtu_cmt hub (HMS)
+#   name:   entity name prefix, e.g. DTU
+packages:
+  dtu_base: !include
+    file: include/dtu_${type}.inc.yaml
+    vars:
+      dtu_id: ${dtu_id}
+      name: ${name}
