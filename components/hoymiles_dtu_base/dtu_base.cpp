@@ -146,6 +146,7 @@ void HoymilesDtuBase::begin_exchange_state_(ExchangeKind kind, HoymilesDtuInvert
   rx_packet_count_ = 0;
   invalid_frame_count_ = 0;
   duplicate_frame_count_ = 0;
+  record_crc_error_ = false;
   dev_ctrl_got_response_ = false;
   dev_ctrl_confirmed_ = false;
   request_len_ = 0;
@@ -220,6 +221,15 @@ bool HoymilesDtuBase::process_response_(uint32_t now) {
   uint8_t payload[HM_MAX_PAYLOAD_SIZE];
   uint8_t payload_len = 0;
   if (!hm_assemble_payload(frames_.data(), expected_frames_, payload, sizeof(payload), &payload_len)) {
+    return false;
+  }
+  if (!hm_payload_crc_valid(payload, payload_len)) {
+    // Every fragment passed its CRC8, so the record was stitched from the wrong fragments (e.g. two
+    // replies mixed up). We cannot tell which one is bad: drop them all and collect afresh.
+    ESP_LOGW(TAG, "Record CRC16 mismatch (%u bytes) - discarding %u fragments", payload_len, frame_count_);
+    record_crc_error_ = true;
+    frame_count_ = 0;
+    expected_frames_ = HM_MAX_FRAME_COUNT;
     return false;
   }
   HmTelemetry telemetry;

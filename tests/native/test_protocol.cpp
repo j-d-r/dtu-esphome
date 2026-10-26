@@ -604,6 +604,22 @@ static void test_decode_4ch_golden_capture() {
   uint8_t plen = 0;
   CHECK(hm_assemble_payload(frames, 4, payload, sizeof(payload), &plen));
   CHECK(plen == 64);
+  // The record ends in a CRC16 over everything before it (86 4B here).
+  CHECK(hm_payload_crc_valid(payload, plen));
+  // Each fragment passes its own CRC8, but fragments in the wrong order no longer make a valid record.
+  HmFrame swapped[4] = {frames[0], frames[2], frames[1], frames[3]};
+  swapped[1].id = 2;
+  swapped[2].id = 3;
+  uint8_t mixed[HM_MAX_PAYLOAD_SIZE];
+  uint8_t mixed_len = 0;
+  CHECK(hm_assemble_payload(swapped, 4, mixed, sizeof(mixed), &mixed_len));
+  CHECK(!hm_payload_crc_valid(mixed, mixed_len));
+  uint8_t corrupt[HM_MAX_PAYLOAD_SIZE];
+  memcpy(corrupt, payload, plen);
+  corrupt[40] ^= 0x01;
+  CHECK(!hm_payload_crc_valid(corrupt, plen));
+  CHECK(!hm_payload_crc_valid(payload, 2));
+  CHECK(!hm_payload_crc_valid(nullptr, plen));
   HmTelemetry t;
   CHECK(hm_parse_realtime_payload(HM_1200, payload, plen, &t));
   CHECK_NEAR(t.ac_voltage, 236.8f);

@@ -397,17 +397,18 @@ void HoymilesDtuRf24::poll_rx_(uint32_t now) {
     return;
   }
   if (now - rx_started_ms_ >= RX_TIMEOUT_MS) {
-    // Partial record: the inverter is answering but we missed fragment(s). Re-request the whole
-    // record (keeping fragments we already have — read_available_packets_ dedups by id) up to a
-    // small budget, instead of giving up. Mirrors Ahoy's missing-fragment retransmit.
-    if (frame_count_ > 0 && frame_count_ < expected_frames_ && ++record_attempt_ <= MAX_RECORD_ATTEMPTS) {
+    // Partial record: the inverter is answering but we missed fragment(s), or the record failed its
+    // CRC16. Re-request the whole record (keeping fragments we already have — read_available_packets_
+    // dedups by id) up to a small budget, instead of giving up. Mirrors Ahoy's missing-fragment
+    // retransmit.
+    if (record_needs_retry_() && ++record_attempt_ <= MAX_RECORD_ATTEMPTS) {
       ESP_LOGD(TAG, "Incomplete record %u/%u - re-requesting (attempt %u)", frame_count_, expected_frames_,
                record_attempt_);
       tx_attempt_ = 0;  // give the re-request a fresh acquisition burst
       transmit_request_(now);
       return;
     }
-    finish_request_(false, frame_count_ == 0 ? "no response" : "incomplete response", now);
+    finish_request_(false, record_failure_reason_(), now);
     return;
   }
 

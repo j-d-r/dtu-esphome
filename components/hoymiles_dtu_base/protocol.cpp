@@ -240,6 +240,13 @@ bool hm_assemble_payload(const HmFrame *frames, uint8_t frame_count, uint8_t *pa
   return true;
 }
 
+bool hm_payload_crc_valid(const uint8_t *payload, uint8_t len) {
+  if (payload == nullptr || len < 3) {
+    return false;
+  }
+  return hm_crc16(payload, len - 2) == read_u16_be(payload, len - 2);
+}
+
 namespace {
 
 // Byte offsets of one DC channel's fields within the assembled realtime record. SHARED_DC_VOLTAGE

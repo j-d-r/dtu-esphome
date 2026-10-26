@@ -152,6 +152,10 @@ bool hm_packet_addressed_to_dtu(const uint8_t *packet, uint8_t len, uint32_t dtu
 bool hm_parse_frame(const uint8_t *packet, uint8_t len, uint64_t inverter_radio_id, HmFrame *frame);
 bool hm_assemble_payload(const HmFrame *frames, uint8_t frame_count, uint8_t *payload, size_t payload_len,
                          uint8_t *assembled_len);
+// True when an assembled record ends in a valid CRC16 (big-endian) over all the bytes before it.
+// The per-fragment CRC8 cannot catch a record stitched together from the wrong fragments; this can
+// (Ahoy compilePayload checks the same).
+bool hm_payload_crc_valid(const uint8_t *payload, uint8_t len);
 // Number of DC channels this model reports (1, 2, or 4).
 uint8_t hm_model_channel_count(HmModel model);
 // Decode an assembled realtime record into telemetry. Field byte offsets follow the model's channel

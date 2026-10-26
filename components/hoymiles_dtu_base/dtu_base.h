@@ -127,8 +127,21 @@ class HoymilesDtuBase : public PollingComponent {
   // DevControl confirmation or parse/deduplicate it as a realtime fragment.
   void ingest_packet_(const uint8_t *packet, uint8_t len);
   // Assemble the collected fragments, decode them for the active inverter's model, and publish.
-  // Returns true only once a complete, decodable record has been published.
+  // Returns true only once a complete, decodable record has been published. A record that fails its
+  // CRC16 is dropped and flagged (record_crc_error_) so the radio re-requests it.
   bool process_response_(uint32_t now);
+  // True when the inverter answered but the record is not usable yet: fragments are missing, or the
+  // assembled record failed its CRC16. The radio re-requests the record in that case.
+  bool record_needs_retry_() const {
+    return record_crc_error_ || (frame_count_ > 0 && frame_count_ < expected_frames_);
+  }
+  // Why a telemetry exchange ended without a record, for finish_request_.
+  const char *record_failure_reason_() const {
+    if (record_crc_error_) {
+      return "record CRC error";
+    }
+    return frame_count_ == 0 ? "no response" : "incomplete response";
+  }
   void publish_radio_error_(const char *error);
   // Report a passively-overheard foreign request. `channel` is the radio channel it was heard on
   // (an nRF24 RF channel, or a CMT2300A frequency channel index).
@@ -155,6 +168,7 @@ class HoymilesDtuBase : public PollingComponent {
   uint8_t rx_packet_count_{0};
   uint8_t invalid_frame_count_{0};
   uint8_t duplicate_frame_count_{0};
+  bool record_crc_error_{false};
   uint8_t request_[32]{};
   uint8_t request_len_{0};
   bool power_limit_pending_{false};

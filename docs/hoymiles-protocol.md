@@ -384,9 +384,11 @@ two bytes of the result are a CRC16 over all the bytes before them:
                                                                                             CRC16
 ```
 
-`crc16(record[0..61]) = 16CF`. Ahoy checks this and asks for the whole record
-again if it is wrong. This component currently relies on the per-fragment
-CRC8s and does not check it.
+`crc16(record[0..61]) = 16CF`. Check it before decoding. Every fragment has
+already passed its CRC8, so a mismatch means the record was put together from
+the wrong fragments, for example from two different replies. The DTU cannot
+tell which fragment is wrong, so it drops them all and asks for the whole
+record again. Ahoy and this component (`hm_payload_crc_valid`) both do this.
 
 ## The realtime record
 

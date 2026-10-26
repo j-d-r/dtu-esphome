@@ -281,8 +281,9 @@ void HoymilesDtuCmt::poll_rx_(uint32_t now) {
     return;
   }
 
-  if (frame_count_ > 0 && frame_count_ < expected_frames_ && ++record_attempt_ <= CMT_MAX_RECORD_ATTEMPTS) {
-    // The link is up but fragments are missing: ask for the record again, keeping what we have.
+  if (record_needs_retry_() && ++record_attempt_ <= CMT_MAX_RECORD_ATTEMPTS) {
+    // The link is up but fragments are missing, or the record failed its CRC16: ask for the record
+    // again, keeping what we have.
     ESP_LOGD(TAG, "Incomplete record %u/%u - re-requesting (attempt %u)", frame_count_, expected_frames_,
              record_attempt_);
     transmit_request_(now);
@@ -294,7 +295,7 @@ void HoymilesDtuCmt::poll_rx_(uint32_t now) {
     transmit_request_(now);
     return;
   }
-  finish_request_(false, frame_count_ == 0 ? "no response" : "incomplete response", now);
+  finish_request_(false, record_failure_reason_(), now);
 }
 
 void HoymilesDtuCmt::read_available_packets_(uint32_t now) {
