@@ -1,0 +1,82 @@
+substitutions:
+  device_name: example
+
+api:
+  batch_delay: 50ms
+  encryption:
+    key: !secret example_encryption_key
+
+ota:
+  - platform: esphome
+    encryption:
+    allow_partition_access: false
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+esphome:
+  name: ${device_name}
+  friendly_name: Hoymiles DTU for HMS
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: arduino
+
+logger:
+  # DEBUG on purpose: it prints every TX (with the frequency), every received frame with its RSSI,
+  # and each accepted fragment. That is what you need to tell "radio silent" from "radio heard
+  # something we misparsed". Drop to INFO once the link is proven.
+  level: DEBUG
+
+# Real time so realtime requests (0x0B) carry a valid epoch instead of a millis stub.
+time:
+  - platform: sntp
+    id: dtu_time
+
+external_components:
+  - source: github://j-d-r/dtu-esphome
+    components: [hoymiles_dtu_base, hoymiles_dtu_cmt]
+
+hoymiles_dtu_cmt:
+  id: dtu_cmt
+  sclk_pin: GPIO5
+  sdio_pin: GPIO8
+  csb_pin: GPIO6
+  fcsb_pin: GPIO7
+  gpio3_pin: GPIO1
+  region: eu
+  frequency: 865MHz
+  tx_power: 13
+  update_interval: 15s
+
+packages:
+  dtu_cmt:
+    url: https://github.com/j-d-r/dtu-esphome
+    files:
+      - path: configs/dtu.yaml
+        vars:
+          type: cmt
+          dtu_id: dtu_cmt
+          name: DTU_CMT
+
+      - path: configs/inverter.yaml
+        vars:
+          type: cmt
+          dtu_id: dtu_cmt
+          id: hms1000
+          name: HMS1000
+          serial: !secret hms1000_sn1
+          model: hms_1000
+          channels: 2
+
+      - path: configs/inverter.yaml
+        vars:
+          type: cmt
+          dtu_id: dtu_cmt
+          id: hms2000
+          name: HMS2000
+          serial: !secret hms2000_sn1
+          model: hms_2000
+          channels: 4

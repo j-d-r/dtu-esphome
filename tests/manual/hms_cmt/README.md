@@ -137,7 +137,8 @@ HM (`0x0003` vs `0x0101`, per OpenDTU), so verify `persistent: true`
 separately before relying on it.
 
 Note that `-> no confirmation frame` with the limit visibly applied is a known
-HM-side quirk (a single unhopped confirmation frame, see the top-level README)
+HM-side quirk (a single unhopped confirmation frame, see
+[docs/rf-protocol.md](../../../docs/rf-protocol.md#the-power-limit-path))
 and the confirmation check itself is the HM one — Ahoy uses the same check for
 HMS. If it turns out HMS confirmations have a different shape, the raw `RX`
 hex for the `D1` reply is what to capture.

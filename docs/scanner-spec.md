@@ -4,7 +4,7 @@ Status: **protocol layer + unit tests implemented; radio driver, config surface,
 and sensors deferred to a hardware-in-the-loop (HIL) session.** Written 2026-07-09.
 
 This is the transmit-side counterpart to the passive `scan_detection` feature
-(README → *Security: detecting scans*). Where `scan_detection` listens and
+([scanning.md → *Detecting scans*](scanning.md#detecting-scans)). Where `scan_detection` listens and
 reports foreign discovery traffic it overhears, the scanner *transmits* the
 discovery requests itself and collects the serials that answer — the same thing
 AhoyDTU, OpenDTU, and the CCC report's proof-of-concept scanner do. The

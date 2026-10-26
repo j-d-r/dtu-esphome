@@ -1,0 +1,90 @@
+substitutions:
+  device_name: example
+
+api:
+  batch_delay: 50ms
+  encryption:
+    key: !secret example_encryption_key
+
+ota:
+  - platform: esphome
+    encryption:
+    allow_partition_access: false
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+esphome:
+  name: ${device_name}
+  friendly_name: Hoymiles DTU for HM
+
+esp32:
+  variant: esp32s3
+  framework:
+    type: arduino
+
+logger:
+  # DEBUG on purpose: it prints every TX (with the frequency), every received frame with its RSSI,
+  # and each accepted fragment. That is what you need to tell "radio silent" from "radio heard
+  # something we misparsed". Drop to INFO once the link is proven.
+  level: DEBUG
+
+# Real time so realtime requests (0x0B) carry a valid epoch instead of a millis stub.
+time:
+  - platform: sntp
+    id: dtu_time
+
+external_components:
+  - source: github://j-d-r/dtu-esphome
+    components: [hoymiles_dtu_base, hoymiles_dtu_rf24]
+
+spi:
+  id: dtu_spi
+  clk_pin: GPIO18
+  mosi_pin: GPIO11
+  miso_pin: GPIO16
+
+hoymiles_dtu_rf24:
+  id: dtu_rf24
+  spi_id: dtu_spi
+  cs_pin: GPIO9
+  ce_pin: GPIO12
+  irq_pin: GPIO17
+  update_interval: 15s
+  # max validated on hardware (100% TX_DS / reliable acquisition). Lower it only if your link is
+  # strong and you want less RF/power; the standalone link is sensitive to TX power.
+  pa_level: max
+  # Passive, receive-only detection of Search-ID scans / foreign control of this inverter (CCC report).
+  # Monitors between telemetry polls; publishes to the scan_detected text sensor from configs/dtu.yaml.
+  scan_detection: true
+
+packages:
+  dtu_rf24:
+    url: https://github.com/j-d-r/dtu-esphome
+    files:
+      - path: configs/dtu.yaml
+        vars:
+          type: rf24
+          dtu_id: dtu_rf24
+          name: DTU24
+
+      - path: configs/inverter.yaml
+        vars:
+          type: rf24
+          dtu_id: dtu_rf24
+          id: hm1000
+          name: HM1000
+          serial: !secret hm1000_sn1
+          model: hm_1000
+          channels: 4
+
+      - path: configs/inverter.yaml
+        vars:
+          type: rf24
+          dtu_id: dtu_rf24
+          id: hm1200
+          name: HM1200
+          serial: !secret hm1200_sn1
+          model: hm_1200
+          channels: 4
